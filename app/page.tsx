@@ -65,6 +65,20 @@ export default function DailyTracker() {
     loadEntry(newDate);
   };
 
+  const goToPreviousDay = () => {
+    const d = new Date(date + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    const newDate = d.toISOString().split('T')[0];
+    handleDateChange(newDate);
+  };
+
+  const goToNextDay = () => {
+    const d = new Date(date + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    const newDate = d.toISOString().split('T')[0];
+    handleDateChange(newDate);
+  };
+
   const formatDateDisplay = (dateStr: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr + 'T00:00:00');
@@ -131,7 +145,11 @@ export default function DailyTracker() {
       <div style={styles.content}>
         {/* Date */}
         <div style={styles.dateHeadline}>
-          <h1 style={styles.dateHeadlineText}>{formatDateDisplay(date)}</h1>
+          <div style={styles.dateNavigation}>
+            <button onClick={goToPreviousDay} style={styles.navButton}>← Prev</button>
+            <h1 style={styles.dateHeadlineText}>{formatDateDisplay(date)}</h1>
+            <button onClick={goToNextDay} style={styles.navButton}>Next →</button>
+          </div>
           <input
             type="date"
             value={date}
@@ -246,12 +264,30 @@ const styles = {
     paddingBottom: '1.5rem',
     borderBottom: '0.5px solid #e8e3db',
   },
+  dateNavigation: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '1rem',
+  },
   dateHeadlineText: {
     margin: '0',
     fontSize: '32px',
     fontWeight: 600 as const,
     color: '#3d3a33',
     lineHeight: '1.2',
+    flex: 1,
+    textAlign: 'center' as const,
+  },
+  navButton: {
+    background: 'transparent',
+    border: '0.5px solid #e8e3db',
+    color: '#3d3a33',
+    fontSize: '13px',
+    padding: '8px 12px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
   },
   datePickerInput: {
     background: 'transparent',
