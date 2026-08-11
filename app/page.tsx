@@ -115,27 +115,6 @@ export default function DailyTracker() {
     }
   };
 
-  const copyToClipboard = () => {
-    const habitsChecked = FIXED_HABITS.filter((h) => habits[h.id]).map((h) => h.label);
-    const tasksUncompleted = tasks.filter((t) => !t.completed).map((t) => t.text);
-
-    let content = date + '\n\n';
-
-    if (reflection.trim()) {
-      content += reflection + '\n\n';
-    }
-
-    if (habitsChecked.length > 0) {
-      content += habitsChecked.join(', ') + '\n\n';
-    }
-
-    if (tasksUncompleted.length > 0) {
-      content += tasksUncompleted.join('\n') + '\n';
-    }
-
-    navigator.clipboard.writeText(content);
-    alert('Copied to clipboard for Ugmonk!');
-  };
 
   return (
     <div style={styles.container}>
@@ -225,9 +204,6 @@ export default function DailyTracker() {
 
         {/* Buttons */}
         <div style={styles.buttonGroup}>
-          <button onClick={copyToClipboard} style={styles.buttonSecondary}>
-            Copy for paper
-          </button>
           <button onClick={saveEntry} disabled={loading} style={styles.buttonPrimary}>
             {loading ? 'Saving...' : saved ? 'Saved ✓' : 'Save entry'}
           </button>
