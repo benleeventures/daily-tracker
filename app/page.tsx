@@ -65,6 +65,16 @@ export default function DailyTracker() {
     loadEntry(newDate);
   };
 
+  const formatDateDisplay = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${dayName} ${month}/${day}/${year}`;
+  };
+
   const toggleHabit = (habitId: string) => {
     setHabits((prev) => ({ ...prev, [habitId]: !prev[habitId] }));
   };
@@ -120,12 +130,13 @@ export default function DailyTracker() {
     <div style={styles.container}>
       <div style={styles.content}>
         {/* Date */}
-        <div style={styles.dateSection}>
+        <div style={styles.dateHeadline}>
+          <h1 style={styles.dateHeadlineText}>{formatDateDisplay(date)}</h1>
           <input
             type="date"
             value={date}
             onChange={(e) => handleDateChange(e.target.value)}
-            style={styles.dateInput}
+            style={styles.datePickerInput}
           />
         </div>
 
@@ -228,18 +239,28 @@ const styles = {
     flexDirection: 'column' as const,
     gap: '1.5rem',
   },
-  dateSection: {
-    paddingBottom: '1rem',
+  dateHeadline: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.75rem',
+    paddingBottom: '1.5rem',
     borderBottom: '0.5px solid #e8e3db',
   },
-  dateInput: {
+  dateHeadlineText: {
+    margin: '0',
+    fontSize: '32px',
+    fontWeight: 600 as const,
+    color: '#3d3a33',
+    lineHeight: '1.2',
+  },
+  datePickerInput: {
     background: 'transparent',
     border: 'none',
-    fontSize: '14px',
-    fontWeight: 500 as const,
-    color: '#3d3a33',
+    fontSize: '13px',
+    color: '#9ca084',
     cursor: 'pointer',
     fontFamily: 'inherit',
+    width: 'fit-content',
   },
   section: {
     display: 'flex',
