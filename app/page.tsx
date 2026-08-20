@@ -28,6 +28,7 @@ export default function DailyTracker() {
   const [newTask, setNewTask] = useState('');
   const [meetings, setMeetings] = useState<Array<{ id: string; person: string; agenda: string[]; discussion: string[]; actionItems: Array<{ text: string; completed: boolean }> }>>([]);
   const [newMeeting, setNewMeeting] = useState({ person: '', agenda: '', discussion: '', actionItems: '' });
+  const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
   const [writtenToUgmonk, setWrittenToUgmonk] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -138,6 +139,43 @@ export default function DailyTracker() {
 
   const deleteMeeting = (meetingId: string) => {
     setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+  };
+
+  const saveMeetingEdit = (meetingId: string, updates: { person: string; agenda: string; discussion: string; actionItems: string }) => {
+    setMeetings((prev) =>
+      prev.map((m) =>
+        m.id === meetingId
+          ? {
+              ...m,
+              person: updates.person,
+              agenda: updates.agenda.split('\n').filter((line) => line.trim()),
+              discussion: updates.discussion.split('\n').filter((line) => line.trim()),
+              actionItems: updates.actionItems.split('\n').filter((line) => line.trim()).map((text) => ({ text, completed: false })),
+            }
+          : m
+      )
+    );
+    setEditingMeetingId(null);
+  };
+
+  const MeetingEditForm = ({ meeting, onSave, onCancel, styles }: any) => {
+    const [person, setPerson] = React.useState(meeting.person);
+    const [agenda, setAgenda] = React.useState(meeting.agenda.join('\n'));
+    const [discussion, setDiscussion] = React.useState(meeting.discussion.join('\n'));
+    const [actionItems, setActionItems] = React.useState(meeting.actionItems.map((ai: any) => ai.text).join('\n'));
+
+    return (
+      <div style={{ ...styles.meetingForm, border: '0.5px solid #e8e3db', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+        <input type="text" value={person} onChange={(e) => setPerson(e.target.value)} placeholder="Person/Topic" style={styles.meetingInput} />
+        <textarea value={agenda} onChange={(e) => setAgenda(e.target.value)} placeholder="Agenda (one per line)" style={{ ...styles.meetingInput, minHeight: '50px', resize: 'none' }} />
+        <textarea value={discussion} onChange={(e) => setDiscussion(e.target.value)} placeholder="Discussion (one per line)" style={{ ...styles.meetingInput, minHeight: '50px', resize: 'none' }} />
+        <textarea value={actionItems} onChange={(e) => setActionItems(e.target.value)} placeholder="Action items (one per line)" style={{ ...styles.meetingInput, minHeight: '50px', resize: 'none' }} />
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={() => onSave(meeting.id, { person, agenda, discussion, actionItems })} style={{ ...styles.buttonPrimary, flex: 1 }}>Save</button>
+          <button onClick={onCancel} style={{ ...styles.buttonSecondary, flex: 1 }}>Cancel</button>
+        </div>
+      </div>
+    );
   };
 
   const toggleWrittenToUgmonk = async () => {
@@ -324,42 +362,49 @@ export default function DailyTracker() {
           <label style={styles.sectionTitle}>Meetings</label>
           <div style={styles.checklist}>
             {meetings.map((meeting) => (
-              <div key={meeting.id} style={styles.meetingItem}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '8px' }}>{meeting.person}</div>
-                  {meeting.agenda.length > 0 && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <div style={{ fontSize: '12px', color: '#9ca084', marginBottom: '4px' }}>Agenda</div>
-                      <ul style={{ margin: '0', paddingLeft: '16px', fontSize: '13px' }}>
-                        {meeting.agenda.map((item, i) => <li key={i}>{item}</li>)}
-                      </ul>
-                    </div>
-                  )}
-                  {meeting.discussion.length > 0 && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <div style={{ fontSize: '12px', color: '#9ca084', marginBottom: '4px' }}>Discussion</div>
-                      <ul style={{ margin: '0', paddingLeft: '16px', fontSize: '13px' }}>
-                        {meeting.discussion.map((item, i) => <li key={i}>{item}</li>)}
-                      </ul>
-                    </div>
-                  )}
-                  {meeting.actionItems.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: '12px', color: '#9ca084', marginBottom: '4px' }}>Action items</div>
-                      {meeting.actionItems.map((item, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', marginBottom: '4px', cursor: 'pointer' }} onClick={() => {
-                          const updated = meetings.map(m => m.id === meeting.id ? { ...m, actionItems: m.actionItems.map((ai, idx) => idx === i ? { ...ai, completed: !ai.completed } : ai) } : m);
-                          setMeetings(updated);
-                        }}>
-                          <input type="checkbox" checked={item.completed} style={styles.checkbox} readOnly />
-                          <span style={{ textDecoration: item.completed ? 'line-through' : 'none' }}>{item.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+              editingMeetingId === meeting.id ? (
+                <MeetingEditForm key={meeting.id} meeting={meeting} onSave={saveMeetingEdit} onCancel={() => setEditingMeetingId(null)} styles={styles} />
+              ) : (
+                <div key={meeting.id} style={styles.meetingItem}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '8px' }}>{meeting.person}</div>
+                    {meeting.agenda.length > 0 && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <div style={{ fontSize: '12px', color: '#9ca084', marginBottom: '4px' }}>Agenda</div>
+                        <ul style={{ margin: '0', paddingLeft: '16px', fontSize: '13px' }}>
+                          {meeting.agenda.map((item, i) => <li key={i}>{item}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {meeting.discussion.length > 0 && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <div style={{ fontSize: '12px', color: '#9ca084', marginBottom: '4px' }}>Discussion</div>
+                        <ul style={{ margin: '0', paddingLeft: '16px', fontSize: '13px' }}>
+                          {meeting.discussion.map((item, i) => <li key={i}>{item}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {meeting.actionItems.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '12px', color: '#9ca084', marginBottom: '4px' }}>Action items</div>
+                        {meeting.actionItems.map((item, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', marginBottom: '4px', cursor: 'pointer' }} onClick={() => {
+                            const updated = meetings.map(m => m.id === meeting.id ? { ...m, actionItems: m.actionItems.map((ai, idx) => idx === i ? { ...ai, completed: !ai.completed } : ai) } : m);
+                            setMeetings(updated);
+                          }}>
+                            <input type="checkbox" checked={item.completed} style={styles.checkbox} readOnly />
+                            <span style={{ textDecoration: item.completed ? 'line-through' : 'none' }}>{item.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button onClick={() => setEditingMeetingId(meeting.id)} style={{ ...styles.deleteBtn, color: '#c9a876' }}>✎</button>
+                    <button onClick={() => deleteMeeting(meeting.id)} style={styles.deleteBtn}>×</button>
+                  </div>
                 </div>
-                <button onClick={() => deleteMeeting(meeting.id)} style={styles.deleteBtn}>×</button>
-              </div>
+              )
             ))}
           </div>
 
