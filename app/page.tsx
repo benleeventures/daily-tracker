@@ -26,8 +26,9 @@ export default function DailyTracker() {
   const [habits, setHabits] = useState<{ [key: string]: boolean }>({});
   const [tasks, setTasks] = useState<Array<{ id: string; text: string; completed: boolean }>>([]);
   const [newTask, setNewTask] = useState('');
-  const [meetings, setMeetings] = useState<Array<{ id: string; time: string; person: string; notes: string }>>([]);
-  const [newMeeting, setNewMeeting] = useState({ time: '', person: '', notes: '' });
+  const [meetings, setMeetings] = useState<Array<{ id: string; person: string; agenda: string[]; discussion: string[]; actionItems: Array<{ text: string; completed: boolean }> }>>([]);
+  const [newMeeting, setNewMeeting] = useState({ person: '', agenda: '', discussion: '', actionItems: '' });
+  const [writtenToUgmonk, setWrittenToUgmonk] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -55,9 +56,11 @@ export default function DailyTracker() {
         setReflection(data.reflection || '');
         setHabits(data.habits || {});
         setTasks(data.tasks || []);
+        setWrittenToUgmonk(data.written_to_ugmonk || false);
       } else {
         setReflection('');
         setTasks([]);
+        setWrittenToUgmonk(false);
       }
     } catch (e) {
       console.log('No entry for this date yet');
@@ -120,20 +123,37 @@ export default function DailyTracker() {
   };
 
   const addMeeting = () => {
-    if (newMeeting.time.trim() || newMeeting.person.trim()) {
+    if (newMeeting.person.trim()) {
       const meeting = {
         id: Date.now().toString(),
-        time: newMeeting.time,
         person: newMeeting.person,
-        notes: newMeeting.notes,
+        agenda: newMeeting.agenda.split('\n').filter(line => line.trim()),
+        discussion: newMeeting.discussion.split('\n').filter(line => line.trim()),
+        actionItems: newMeeting.actionItems.split('\n').filter(line => line.trim()).map(text => ({ text, completed: false })),
       };
       setMeetings((prev) => [...prev, meeting]);
-      setNewMeeting({ time: '', person: '', notes: '' });
+      setNewMeeting({ person: '', agenda: '', discussion: '', actionItems: '' });
     }
   };
 
   const deleteMeeting = (meetingId: string) => {
     setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+  };
+
+  const toggleWrittenToUgmonk = async () => {
+    const newStatus = !writtenToUgmonk;
+    setWrittenToUgmonk(newStatus);
+    try {
+      await supabase.from('daily_entries').upsert(
+        {
+          date,
+          written_to_ugmonk: newStatus,
+        },
+        { onConflict: 'date' }
+      );
+    } catch (e) {
+      console.error('Error updating Ugmonk status:', e);
+    }
   };
 
   const saveEntry = async () => {
@@ -145,6 +165,7 @@ export default function DailyTracker() {
           reflection,
           habits,
           tasks,
+          written_to_ugmonk: writtenToUgmonk,
         },
         { onConflict: 'date' }
       );
@@ -280,6 +301,9 @@ export default function DailyTracker() {
           <button onClick={saveEntry} disabled={loading} style={styles.buttonPrimary}>
             {loading ? 'Saving...' : saved ? 'Saved ✓' : 'Save entry'}
           </button>
+          <button onClick={toggleWrittenToUgmonk} style={{ ...styles.buttonSecondary, opacity: writtenToUgmonk ? 1 : 0.6 }}>
+            {writtenToUgmonk ? '✓ Written to Ugmonk' : 'Mark written'}
+          </button>
         </div>
         </>
         )}
@@ -301,10 +325,38 @@ export default function DailyTracker() {
           <div style={styles.checklist}>
             {meetings.map((meeting) => (
               <div key={meeting.id} style={styles.meetingItem}>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 500 }}>{meeting.time || '—'}</div>
-                  <div style={{ fontSize: '14px', color: '#9ca084' }}>{meeting.person}</div>
-                  {meeting.notes && <div style={{ fontSize: '13px', marginTop: '4px' }}>{meeting.notes}</div>}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '8px' }}>{meeting.person}</div>
+                  {meeting.agenda.length > 0 && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <div style={{ fontSize: '12px', color: '#9ca084', marginBottom: '4px' }}>Agenda</div>
+                      <ul style={{ margin: '0', paddingLeft: '16px', fontSize: '13px' }}>
+                        {meeting.agenda.map((item, i) => <li key={i}>{item}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {meeting.discussion.length > 0 && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <div style={{ fontSize: '12px', color: '#9ca084', marginBottom: '4px' }}>Discussion</div>
+                      <ul style={{ margin: '0', paddingLeft: '16px', fontSize: '13px' }}>
+                        {meeting.discussion.map((item, i) => <li key={i}>{item}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {meeting.actionItems.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#9ca084', marginBottom: '4px' }}>Action items</div>
+                      {meeting.actionItems.map((item, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', marginBottom: '4px', cursor: 'pointer' }} onClick={() => {
+                          const updated = meetings.map(m => m.id === meeting.id ? { ...m, actionItems: m.actionItems.map((ai, idx) => idx === i ? { ...ai, completed: !ai.completed } : ai) } : m);
+                          setMeetings(updated);
+                        }}>
+                          <input type="checkbox" checked={item.completed} style={styles.checkbox} readOnly />
+                          <span style={{ textDecoration: item.completed ? 'line-through' : 'none' }}>{item.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => deleteMeeting(meeting.id)} style={styles.deleteBtn}>×</button>
               </div>
@@ -314,13 +366,6 @@ export default function DailyTracker() {
           {/* Add Meeting */}
           <div style={styles.meetingForm}>
             <input
-              type="time"
-              value={newMeeting.time}
-              onChange={(e) => setNewMeeting({ ...newMeeting, time: e.target.value })}
-              placeholder="Time"
-              style={styles.meetingInput}
-            />
-            <input
               type="text"
               value={newMeeting.person}
               onChange={(e) => setNewMeeting({ ...newMeeting, person: e.target.value })}
@@ -328,10 +373,22 @@ export default function DailyTracker() {
               style={styles.meetingInput}
             />
             <textarea
-              value={newMeeting.notes}
-              onChange={(e) => setNewMeeting({ ...newMeeting, notes: e.target.value })}
-              placeholder="Notes"
-              style={{ ...styles.meetingInput, minHeight: '60px', resize: 'none' }}
+              value={newMeeting.agenda}
+              onChange={(e) => setNewMeeting({ ...newMeeting, agenda: e.target.value })}
+              placeholder="Agenda (one per line)"
+              style={{ ...styles.meetingInput, minHeight: '50px', resize: 'none' }}
+            />
+            <textarea
+              value={newMeeting.discussion}
+              onChange={(e) => setNewMeeting({ ...newMeeting, discussion: e.target.value })}
+              placeholder="Discussion (one per line)"
+              style={{ ...styles.meetingInput, minHeight: '50px', resize: 'none' }}
+            />
+            <textarea
+              value={newMeeting.actionItems}
+              onChange={(e) => setNewMeeting({ ...newMeeting, actionItems: e.target.value })}
+              placeholder="Action items (one per line)"
+              style={{ ...styles.meetingInput, minHeight: '50px', resize: 'none' }}
             />
             <button onClick={addMeeting} style={styles.buttonPrimary}>Add meeting</button>
           </div>
@@ -493,7 +550,7 @@ const styles = {
   buttonGroup: {
     display: 'flex',
     gap: '8px',
-    marginTop: 'auto',
+    marginTop: '1rem',
   },
   buttonPrimary: {
     flex: 1,
