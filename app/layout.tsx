@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Daily Tracker",
+  title: "Dailys",
   description: "Daily reflections, habits, tasks, and meeting notes",
   icons: {
     icon: "/favicon.svg",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Daily Tracker",
+    title: "Dailys",
   },
   formatDetection: {
     telephone: false,

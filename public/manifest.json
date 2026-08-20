@@ -1,6 +1,6 @@
 {
-  "name": "Daily Tracker",
-  "short_name": "Tracker",
+  "name": "Dailys",
+  "short_name": "Dailys",
   "description": "Daily reflections, habits, tasks, and meeting notes",
   "start_url": "/",
   "display": "standalone",
