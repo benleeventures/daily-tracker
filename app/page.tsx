@@ -20,11 +20,14 @@ const FIXED_HABITS = [
 ];
 
 export default function DailyTracker() {
+  const [view, setView] = useState<'daily' | 'meetings'>('daily');
   const [date, setDate] = useState<string>('');
   const [reflection, setReflection] = useState('');
   const [habits, setHabits] = useState<{ [key: string]: boolean }>({});
   const [tasks, setTasks] = useState<Array<{ id: string; text: string; completed: boolean }>>([]);
   const [newTask, setNewTask] = useState('');
+  const [meetings, setMeetings] = useState<Array<{ id: string; time: string; person: string; notes: string }>>([]);
+  const [newMeeting, setNewMeeting] = useState({ time: '', person: '', notes: '' });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -116,6 +119,23 @@ export default function DailyTracker() {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
   };
 
+  const addMeeting = () => {
+    if (newMeeting.time.trim() || newMeeting.person.trim()) {
+      const meeting = {
+        id: Date.now().toString(),
+        time: newMeeting.time,
+        person: newMeeting.person,
+        notes: newMeeting.notes,
+      };
+      setMeetings((prev) => [...prev, meeting]);
+      setNewMeeting({ time: '', person: '', notes: '' });
+    }
+  };
+
+  const deleteMeeting = (meetingId: string) => {
+    setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+  };
+
   const saveEntry = async () => {
     setLoading(true);
     try {
@@ -143,7 +163,30 @@ export default function DailyTracker() {
 
   return (
     <div style={styles.container}>
+      <div style={styles.tabBar}>
+        <button
+          onClick={() => setView('daily')}
+          style={{
+            ...styles.tabButton,
+            ...(view === 'daily' ? styles.tabButtonActive : styles.tabButtonInactive),
+          }}
+        >
+          Daily
+        </button>
+        <button
+          onClick={() => setView('meetings')}
+          style={{
+            ...styles.tabButton,
+            ...(view === 'meetings' ? styles.tabButtonActive : styles.tabButtonInactive),
+          }}
+        >
+          Meetings
+        </button>
+      </div>
+
       <div style={styles.content}>
+        {view === 'daily' && (
+        <>
         {/* Date */}
         <div style={styles.dateHeadline}>
           <div style={styles.dateNavigation}>
@@ -238,6 +281,63 @@ export default function DailyTracker() {
             {loading ? 'Saving...' : saved ? 'Saved ✓' : 'Save entry'}
           </button>
         </div>
+        </>
+        )}
+
+        {view === 'meetings' && (
+        <>
+        {/* Meetings Date */}
+        <div style={styles.dateHeadline}>
+          <div style={styles.dateNavigation}>
+            <button onClick={goToPreviousDay} style={styles.navButton}>← Prev</button>
+            <h1 style={styles.dateHeadlineText}>{formatDateDisplay(date)}</h1>
+            <button onClick={goToNextDay} style={styles.navButton}>Next →</button>
+          </div>
+        </div>
+
+        {/* Meetings List */}
+        <div style={styles.section}>
+          <label style={styles.sectionTitle}>Meetings</label>
+          <div style={styles.checklist}>
+            {meetings.map((meeting) => (
+              <div key={meeting.id} style={styles.meetingItem}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 500 }}>{meeting.time || '—'}</div>
+                  <div style={{ fontSize: '14px', color: '#9ca084' }}>{meeting.person}</div>
+                  {meeting.notes && <div style={{ fontSize: '13px', marginTop: '4px' }}>{meeting.notes}</div>}
+                </div>
+                <button onClick={() => deleteMeeting(meeting.id)} style={styles.deleteBtn}>×</button>
+              </div>
+            ))}
+          </div>
+
+          {/* Add Meeting */}
+          <div style={styles.meetingForm}>
+            <input
+              type="time"
+              value={newMeeting.time}
+              onChange={(e) => setNewMeeting({ ...newMeeting, time: e.target.value })}
+              placeholder="Time"
+              style={styles.meetingInput}
+            />
+            <input
+              type="text"
+              value={newMeeting.person}
+              onChange={(e) => setNewMeeting({ ...newMeeting, person: e.target.value })}
+              placeholder="Person/Topic"
+              style={styles.meetingInput}
+            />
+            <textarea
+              value={newMeeting.notes}
+              onChange={(e) => setNewMeeting({ ...newMeeting, notes: e.target.value })}
+              placeholder="Notes"
+              style={{ ...styles.meetingInput, minHeight: '60px', resize: 'none' }}
+            />
+            <button onClick={addMeeting} style={styles.buttonPrimary}>Add meeting</button>
+          </div>
+        </div>
+        </>
+        )}
       </div>
     </div>
   );
@@ -416,5 +516,47 @@ const styles = {
     fontSize: '13px',
     fontWeight: 500 as const,
     cursor: 'pointer',
+  },
+  tabBar: {
+    display: 'flex',
+    gap: '1rem',
+    borderBottom: '0.5px solid #e8e3db',
+    paddingBottom: '1rem',
+  },
+  tabButton: {
+    background: 'transparent',
+    border: 'none',
+    fontSize: '14px',
+    fontWeight: 500 as const,
+    cursor: 'pointer',
+    padding: '8px 0',
+  },
+  tabButtonActive: {
+    color: '#c9a876',
+    borderBottom: '2px solid #c9a876',
+  },
+  tabButtonInactive: {
+    color: '#9ca084',
+  },
+  meetingItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '12px 0',
+    borderBottom: '0.5px solid #e8e3db',
+  },
+  meetingForm: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '8px',
+    marginTop: '1rem',
+  },
+  meetingInput: {
+    background: 'transparent',
+    border: '0.5px solid #e8e3db',
+    borderRadius: '4px',
+    padding: '8px 12px',
+    fontSize: '13px',
+    color: '#3d3a33',
+    fontFamily: 'inherit',
   },
 };
