@@ -12,10 +12,11 @@ interface DailyEntry {
 }
 
 const FIXED_HABITS = [
-  { id: 'surf', label: 'Surf or movement class' },
-  { id: 'meditate', label: 'Meditate (15+ min)' },
+  { id: 'surf', label: 'Surf/Movement' },
   { id: 'write', label: 'Write in journal' },
-  { id: 'supplements', label: 'Take supplements' },
+  { id: 'meditate', label: 'Meditate 20+ mins' },
+  { id: 'supplements', label: 'Supplements/Peptides' },
+  { id: 'biofeedback', label: 'Biofeedback' },
 ];
 
 export default function DailyTracker() {
