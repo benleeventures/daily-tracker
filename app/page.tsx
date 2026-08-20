@@ -50,22 +50,25 @@ export default function DailyTracker() {
     try {
       const { data, error } = await supabase
         .from('daily_entries')
-        .select('*')
-        .eq('date', entryDate)
-        .single();
+        .select('reflection,habits,tasks,written_to_ugmonk')
+        .eq('date', entryDate);
 
-      if (data) {
-        setReflection(data.reflection || '');
-        setHabits(data.habits || {});
-        setTasks(data.tasks || []);
-        setWrittenToUgmonk(data.written_to_ugmonk || false);
+      if (data && data.length > 0) {
+        const entry = data[0];
+        setReflection(entry.reflection || '');
+        setHabits(entry.habits || {});
+        setTasks(entry.tasks || []);
+        setWrittenToUgmonk(entry.written_to_ugmonk || false);
       } else {
         setReflection('');
         setTasks([]);
         setWrittenToUgmonk(false);
       }
     } catch (e) {
-      console.log('No entry for this date yet');
+      console.error('Error loading entry:', e);
+      setReflection('');
+      setTasks([]);
+      setWrittenToUgmonk(false);
     }
   };
 
