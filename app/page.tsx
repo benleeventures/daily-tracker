@@ -48,17 +48,13 @@ export default function DailyTracker() {
 
   const loadEntry = async (entryDate: string) => {
     try {
-      const { data, error } = await supabase
-        .from('daily_entries')
-        .select('reflection,habits,tasks,written_to_ugmonk')
-        .eq('date', entryDate);
-
-      if (data && data.length > 0) {
-        const entry = data[0];
-        setReflection(entry.reflection || '');
-        setHabits(entry.habits || {});
-        setTasks(entry.tasks || []);
-        setWrittenToUgmonk(entry.written_to_ugmonk || false);
+      const saved = localStorage.getItem(`dailys_${entryDate}`);
+      if (saved) {
+        const data = JSON.parse(saved);
+        setReflection(data.reflection || '');
+        setHabits(data.habits || {});
+        setTasks(data.tasks || []);
+        setWrittenToUgmonk(data.written_to_ugmonk || false);
       } else {
         setReflection('');
         setTasks([]);
@@ -178,13 +174,12 @@ export default function DailyTracker() {
     const newStatus = !writtenToUgmonk;
     setWrittenToUgmonk(newStatus);
     try {
-      await supabase.from('daily_entries').upsert(
-        {
-          date,
-          written_to_ugmonk: newStatus,
-        },
-        { onConflict: 'date' }
-      );
+      const saved = localStorage.getItem(`dailys_${date}`);
+      const entry = saved ? JSON.parse(saved) : { date, reflection, habits, tasks };
+      localStorage.setItem(`dailys_${date}`, JSON.stringify({
+        ...entry,
+        written_to_ugmonk: newStatus,
+      }));
     } catch (e) {
       console.error('Error updating Ugmonk status:', e);
     }
@@ -193,21 +188,15 @@ export default function DailyTracker() {
   const saveEntry = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.from('daily_entries').upsert(
-        {
-          date,
-          reflection,
-          habits,
-          tasks,
-          written_to_ugmonk: writtenToUgmonk,
-        },
-        { onConflict: 'date' }
-      );
-
-      if (!error) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      }
+      localStorage.setItem(`dailys_${date}`, JSON.stringify({
+        date,
+        reflection,
+        habits,
+        tasks,
+        written_to_ugmonk: writtenToUgmonk,
+      }));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch (e) {
       console.error('Error saving entry:', e);
     } finally {
