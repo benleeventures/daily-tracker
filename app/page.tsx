@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getLocalDateString } from '@/lib/local-date';
 
 interface DailyEntry {
   id: string;
@@ -34,7 +35,7 @@ export default function DailyTracker() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     setDate(today);
     loadEntry(today);
 
