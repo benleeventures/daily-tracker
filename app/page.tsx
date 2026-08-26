@@ -12,6 +12,13 @@ interface DailyEntry {
   tasks: Array<{ id: string; text: string; completed: boolean }>;
 }
 
+interface Meeting {
+  id: string;
+  person: string;
+  notes: string;
+  granola_link: string;
+}
+
 const FIXED_HABITS = [
   { id: 'surf', label: 'Surf/Movement' },
   { id: 'write', label: 'Write in journal' },
@@ -27,8 +34,8 @@ export default function DailyTracker() {
   const [habits, setHabits] = useState<{ [key: string]: boolean }>({});
   const [tasks, setTasks] = useState<Array<{ id: string; text: string; completed: boolean }>>([]);
   const [newTask, setNewTask] = useState('');
-  const [meetings, setMeetings] = useState<Array<{ id: string; person: string; notes: string }>>([]);
-  const [newMeeting, setNewMeeting] = useState({ person: '', notes: '' });
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [newMeeting, setNewMeeting] = useState({ person: '', notes: '', granola_link: '' });
   const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
   const [energy, setEnergy] = useState<string>('');
   const [observations, setObservations] = useState('');
@@ -135,13 +142,14 @@ export default function DailyTracker() {
 
   const addMeeting = () => {
     if (newMeeting.person.trim() || newMeeting.notes.trim()) {
-      const meeting = {
+      const meeting: Meeting = {
         id: Date.now().toString(),
         person: newMeeting.person,
         notes: newMeeting.notes,
+        granola_link: newMeeting.granola_link,
       };
       setMeetings((prev) => [...prev, meeting]);
-      setNewMeeting({ person: '', notes: '' });
+      setNewMeeting({ person: '', notes: '', granola_link: '' });
     }
   };
 
@@ -149,7 +157,7 @@ export default function DailyTracker() {
     setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
   };
 
-  const saveMeetingEdit = (meetingId: string, updates: { person: string; notes: string }) => {
+  const saveMeetingEdit = (meetingId: string, updates: { person: string; notes: string; granola_link: string }) => {
     setMeetings((prev) =>
       prev.map((m) =>
         m.id === meetingId
@@ -157,6 +165,7 @@ export default function DailyTracker() {
               ...m,
               person: updates.person,
               notes: updates.notes,
+              granola_link: updates.granola_link,
             }
           : m
       )
@@ -167,13 +176,15 @@ export default function DailyTracker() {
   const MeetingEditForm = ({ meeting, onSave, onCancel, styles }: any) => {
     const [person, setPerson] = React.useState(meeting.person);
     const [notes, setNotes] = React.useState(meeting.notes);
+    const [granola_link, setGranolaLink] = React.useState(meeting.granola_link || '');
 
     return (
       <div style={{ ...styles.meetingForm, border: '0.5px solid #e8e3db', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
         <input type="text" value={person} onChange={(e) => setPerson(e.target.value)} placeholder="Person/Topic" style={styles.meetingInput} />
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes" style={{ ...styles.meetingInput, minHeight: '80px', resize: 'none' }} />
+        <input type="text" value={granola_link} onChange={(e) => setGranolaLink(e.target.value)} placeholder="Granola link (optional)" style={styles.meetingInput} />
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => onSave(meeting.id, { person, notes })} style={{ ...styles.buttonPrimary, flex: 1 }}>Save</button>
+          <button onClick={() => onSave(meeting.id, { person, notes, granola_link })} style={{ ...styles.buttonPrimary, flex: 1 }}>Save</button>
           <button onClick={onCancel} style={{ ...styles.buttonSecondary, flex: 1 }}>Cancel</button>
         </div>
       </div>
@@ -214,6 +225,20 @@ export default function DailyTracker() {
     } catch (e) {
       console.error('Error updating Ugmonk status:', e);
     }
+  };
+
+  const generateShareLink = (meeting: Meeting) => {
+    const encoded = btoa(JSON.stringify({
+      person: meeting.person,
+      notes: meeting.notes,
+      granola_link: meeting.granola_link,
+    }));
+    const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/dailys/share/${encoded}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert('Share link copied to clipboard!');
+    }).catch(() => {
+      prompt('Copy this link:', shareUrl);
+    });
   };
 
   const saveEntry = async () => {
@@ -433,9 +458,11 @@ export default function DailyTracker() {
                 <div key={meeting.id} style={styles.meetingItem}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '8px' }}>{meeting.person}</div>
-                    {meeting.notes && <div style={{ fontSize: '13px', color: '#3d3a33', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>{meeting.notes}</div>}
+                    {meeting.notes && <div style={{ fontSize: '13px', color: '#3d3a33', lineHeight: '1.5', whiteSpace: 'pre-wrap', marginBottom: '8px' }}>{meeting.notes}</div>}
+                    {meeting.granola_link && <div style={{ fontSize: '12px', color: '#c9a876', marginBottom: '8px' }}><a href={meeting.granola_link} target="_blank" rel="noopener noreferrer" style={{ color: '#c9a876', textDecoration: 'none' }}>Granola →</a></div>}
                   </div>
                   <div style={{ display: 'flex', gap: '4px' }}>
+                    <button onClick={() => generateShareLink(meeting)} style={{ ...styles.deleteBtn, color: '#c9a876', fontSize: '14px' }} title="Share notes">↗</button>
                     <button onClick={() => setEditingMeetingId(meeting.id)} style={{ ...styles.deleteBtn, color: '#c9a876' }}>✎</button>
                     <button onClick={() => deleteMeeting(meeting.id)} style={styles.deleteBtn}>×</button>
                   </div>
@@ -458,6 +485,13 @@ export default function DailyTracker() {
               onChange={(e) => setNewMeeting({ ...newMeeting, notes: e.target.value })}
               placeholder="Notes"
               style={{ ...styles.meetingInput, minHeight: '80px', resize: 'none' }}
+            />
+            <input
+              type="text"
+              value={newMeeting.granola_link}
+              onChange={(e) => setNewMeeting({ ...newMeeting, granola_link: e.target.value })}
+              placeholder="Granola link (optional)"
+              style={styles.meetingInput}
             />
             <button onClick={addMeeting} style={styles.buttonPrimary}>Add meeting</button>
           </div>
