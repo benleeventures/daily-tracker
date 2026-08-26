@@ -480,12 +480,21 @@ export default function DailyTracker() {
               placeholder="Person/Topic"
               style={styles.meetingInput}
             />
-            <textarea
-              value={newMeeting.notes}
-              onChange={(e) => setNewMeeting({ ...newMeeting, notes: e.target.value })}
-              placeholder="Notes"
-              style={{ ...styles.meetingInput, minHeight: '80px', resize: 'none' }}
-            />
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <textarea
+                value={newMeeting.notes}
+                onChange={(e) => setNewMeeting({ ...newMeeting, notes: e.target.value })}
+                placeholder="Notes"
+                style={{ ...styles.meetingInput, minHeight: '80px', resize: 'none', flex: 1 }}
+              />
+              <button
+                onClick={() => setNewMeeting({ ...newMeeting, notes: 'Agenda\n\n* \n\nDiscussion\n\n* \n\nAction Items\n\n* [ ] \n* [ ] ' })}
+                style={{ ...styles.templateBtn, alignSelf: 'flex-start', marginTop: '2px' }}
+                title="Insert meeting template"
+              >
+                Template
+              </button>
+            </div>
             <input
               type="text"
               value={newMeeting.granola_link}
@@ -738,5 +747,16 @@ const styles = {
     fontSize: '13px',
     color: '#3d3a33',
     fontFamily: 'inherit',
+  },
+  templateBtn: {
+    background: 'transparent',
+    border: '0.5px solid #e8e3db',
+    borderRadius: '4px',
+    padding: '8px 12px',
+    fontSize: '12px',
+    color: '#c9a876',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    fontWeight: 500 as const,
   },
 };
