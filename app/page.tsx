@@ -30,6 +30,10 @@ export default function DailyTracker() {
   const [meetings, setMeetings] = useState<Array<{ id: string; person: string; notes: string }>>([]);
   const [newMeeting, setNewMeeting] = useState({ person: '', notes: '' });
   const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
+  const [energy, setEnergy] = useState<string>('');
+  const [observations, setObservations] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskText, setEditingTaskText] = useState('');
   const [writtenToUgmonk, setWrittenToUgmonk] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -52,17 +56,23 @@ export default function DailyTracker() {
       if (saved) {
         const data = JSON.parse(saved);
         setReflection(data.reflection || '');
+        setEnergy(data.energy || '');
+        setObservations(data.observations || '');
         setHabits(data.habits || {});
         setTasks(data.tasks || []);
         setWrittenToUgmonk(data.written_to_ugmonk || false);
       } else {
         setReflection('');
+        setEnergy('');
+        setObservations('');
         setTasks([]);
         setWrittenToUgmonk(false);
       }
     } catch (e) {
       console.error('Error loading entry:', e);
       setReflection('');
+      setEnergy('');
+      setObservations('');
       setTasks([]);
       setWrittenToUgmonk(false);
     }
@@ -170,6 +180,27 @@ export default function DailyTracker() {
     );
   };
 
+  const setEnergyAndSave = (emoji: string) => {
+    setEnergy(emoji);
+    try {
+      const saved = localStorage.getItem(`dailys_${date}`);
+      const entry = saved ? JSON.parse(saved) : { date, reflection, observations, habits, tasks };
+      localStorage.setItem(`dailys_${date}`, JSON.stringify({
+        ...entry,
+        energy: emoji,
+      }));
+    } catch (e) {
+      console.error('Error saving energy:', e);
+    }
+  };
+
+  const saveTaskEdit = (taskId: string, newText: string) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, text: newText } : t))
+    );
+    setEditingTaskId(null);
+  };
+
   const toggleWrittenToUgmonk = async () => {
     const newStatus = !writtenToUgmonk;
     setWrittenToUgmonk(newStatus);
@@ -191,6 +222,8 @@ export default function DailyTracker() {
       localStorage.setItem(`dailys_${date}`, JSON.stringify({
         date,
         reflection,
+        energy,
+        observations,
         habits,
         tasks,
         written_to_ugmonk: writtenToUgmonk,
@@ -246,14 +279,33 @@ export default function DailyTracker() {
           />
         </div>
 
-        {/* Reflection */}
+        {/* Energy & Observations */}
         <div style={styles.section}>
-          <label style={styles.sectionTitle}>Energy & observations</label>
+          <label style={styles.sectionTitle}>How's your energy?</label>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '16px', fontSize: '32px' }}>
+            {['😤', '😔', '😐', '😊', '🤩'].map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => setEnergyAndSave(emoji)}
+                style={{
+                  background: energy === emoji ? '#c9a876' : 'transparent',
+                  border: energy === emoji ? '2px solid #c9a876' : '2px solid #e8e3db',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  fontSize: '28px',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
           <textarea
-            value={reflection}
-            onChange={(e) => setReflection(e.target.value)}
-            placeholder="What happened today? What matters?"
-            style={styles.textarea}
+            value={observations}
+            onChange={(e) => setObservations(e.target.value)}
+            placeholder="Observations (optional)"
+            style={{ ...styles.textarea, minHeight: '80px' }}
           />
         </div>
 
@@ -281,24 +333,44 @@ export default function DailyTracker() {
           <div style={styles.checklist}>
             {tasks.map((task) => (
               <div key={task.id} style={styles.taskRow}>
-                <label style={styles.checkboxItem}>
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => toggleTask(task.id)}
-                    style={styles.checkbox}
-                  />
-                  <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>
-                    {task.text}
-                  </span>
-                </label>
-                <button
-                  onClick={() => deleteTask(task.id)}
-                  style={styles.deleteBtn}
-                  aria-label="Delete task"
-                >
-                  ×
-                </button>
+                {editingTaskId === task.id ? (
+                  <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+                    <input
+                      type="text"
+                      value={editingTaskText}
+                      onChange={(e) => setEditingTaskText(e.target.value)}
+                      autoFocus
+                      style={{ ...styles.taskField, flex: 1 }}
+                    />
+                    <button
+                      onClick={() => saveTaskEdit(task.id, editingTaskText)}
+                      style={{ ...styles.deleteBtn, color: '#c9a876' }}
+                    >
+                      ✓
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <label style={styles.checkboxItem} onClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }}>
+                      <input
+                        type="checkbox"
+                        checked={task.completed}
+                        onChange={() => toggleTask(task.id)}
+                        style={styles.checkbox}
+                      />
+                      <span style={{ textDecoration: task.completed ? 'line-through' : 'none', cursor: 'pointer' }}>
+                        {task.text}
+                      </span>
+                    </label>
+                    <button
+                      onClick={() => deleteTask(task.id)}
+                      style={styles.deleteBtn}
+                      aria-label="Delete task"
+                    >
+                      ×
+                    </button>
+                  </>
+                )}
               </div>
             ))}
           </div>
