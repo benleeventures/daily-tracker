@@ -174,9 +174,9 @@ export default function DailyTracker() {
   };
 
   const MeetingEditForm = ({ meeting, onSave, onCancel, styles }: any) => {
-    const [person, setPerson] = React.useState(meeting.person);
-    const [notes, setNotes] = React.useState(meeting.notes);
-    const [granola_link, setGranolaLink] = React.useState(meeting.granola_link || '');
+    const [person, setPerson] = useState(meeting.person);
+    const [notes, setNotes] = useState(meeting.notes);
+    const [granola_link, setGranolaLink] = useState(meeting.granola_link || '');
 
     return (
       <div style={{ ...styles.meetingForm, border: '0.5px solid #e8e3db', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
