@@ -1,7 +1,7 @@
 <svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
-  <rect width="180" height="180" rx="40" fill="#faf8f3"/>
+  <rect width="180" height="180" rx="40" fill="#ede2d4"/>
   <g transform="translate(45, 45)">
-    <rect width="90" height="90" rx="6" fill="none" stroke="#c9a876" stroke-width="8"/>
-    <rect width="60" height="60" rx="4" fill="none" stroke="#c9a876" stroke-width="6" x="15" y="15"/>
+    <rect width="90" height="90" rx="6" fill="none" stroke="#c6a96c" stroke-width="8"/>
+    <rect width="60" height="60" rx="4" fill="none" stroke="#c6a96c" stroke-width="6" x="15" y="15"/>
   </g>
 </svg>

@@ -240,6 +240,14 @@ export default function DailyTracker() {
 
   return (
     <div style={styles.container}>
+      <div style={styles.header}>
+        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style={styles.logo}>
+          <rect width="40" height="40" fill="none"/>
+          <rect width="22" height="22" x="9" y="9" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+          <rect width="14" height="14" x="13" y="13" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+        <span style={styles.brandText}>Dailys</span>
+      </div>
       <div style={styles.tabBar}>
         <button
           onClick={() => setView('daily')}
@@ -468,6 +476,26 @@ const styles = {
     color: '#3d3a33',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     padding: '2rem 1rem',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '2rem',
+    maxWidth: '640px',
+    margin: '0 auto 2rem auto',
+  },
+  logo: {
+    width: '32px',
+    height: '32px',
+    color: '#c6a96c',
+    flexShrink: 0,
+  },
+  brandText: {
+    fontSize: '16px',
+    fontWeight: 600 as const,
+    color: '#3d3a33',
+    letterSpacing: '-0.5px',
   },
   content: {
     maxWidth: '640px',
