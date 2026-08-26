@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getLocalDateString } from '@/lib/local-date';
 
@@ -8,8 +8,11 @@ interface DailyEntry {
   id: string;
   date: string;
   reflection: string;
+  energy: string;
+  observations: string;
   habits: { [key: string]: boolean };
   tasks: Array<{ id: string; text: string; completed: boolean }>;
+  written_to_ugmonk: boolean;
 }
 
 interface Meeting {
@@ -44,24 +47,32 @@ export default function DailyTracker() {
   const [writtenToUgmonk, setWrittenToUgmonk] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [entryId, setEntryId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    const today = getLocalDateString();
-    setDate(today);
-    loadEntry(today);
-
-    const initHabits = FIXED_HABITS.reduce((acc, habit) => {
-      acc[habit.id] = false;
-      return acc;
-    }, {} as { [key: string]: boolean });
-    setHabits(initHabits);
-  }, []);
-
-  const loadEntry = async (entryDate: string) => {
+  const loadEntry = useCallback(async (entryDate: string) => {
     try {
-      const saved = localStorage.getItem(`dailys_${entryDate}`);
-      if (saved) {
-        const data = JSON.parse(saved);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('Not authenticated');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('daily_entries')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('date', entryDate)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned (not an error)
+        console.error('Error loading entry:', error);
+        return;
+      }
+
+      if (data) {
+        setEntryId(data.id);
         setReflection(data.reflection || '');
         setEnergy(data.energy || '');
         setObservations(data.observations || '');
@@ -69,6 +80,7 @@ export default function DailyTracker() {
         setTasks(data.tasks || []);
         setWrittenToUgmonk(data.written_to_ugmonk || false);
       } else {
+        setEntryId(null);
         setReflection('');
         setEnergy('');
         setObservations('');
@@ -83,25 +95,148 @@ export default function DailyTracker() {
       setTasks([]);
       setWrittenToUgmonk(false);
     }
-  };
+  }, []);
 
-  const handleDateChange = (newDate: string) => {
+  const loadMeetings = useCallback(async (meetingDate: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('Not authenticated');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('meetings')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('date', meetingDate)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading meetings:', error);
+        setMeetings([]);
+        return;
+      }
+
+      if (data) {
+        setMeetings(data.map(m => ({
+          id: m.id,
+          person: m.person,
+          notes: m.notes,
+          granola_link: m.granola_link,
+        })));
+      }
+    } catch (e) {
+      console.error('Error loading meetings:', e);
+      setMeetings([]);
+    }
+  }, []);
+
+  const saveEntryToSupabase = useCallback(async (entryData: any) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('Not authenticated');
+        return;
+      }
+
+      if (entryId) {
+        // Update existing entry
+        const { error } = await supabase
+          .from('daily_entries')
+          .update({
+            ...entryData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', entryId)
+          .eq('user_id', session.user.id);
+
+        if (error) {
+          console.error('Error updating entry:', error);
+          return;
+        }
+      } else {
+        // Create new entry
+        const { data, error } = await supabase
+          .from('daily_entries')
+          .insert({
+            user_id: session.user.id,
+            date,
+            ...entryData,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating entry:', error);
+          return;
+        }
+
+        if (data) {
+          setEntryId(data.id);
+        }
+      }
+    } catch (e) {
+      console.error('Error saving entry to Supabase:', e);
+    }
+  }, [entryId, date]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      if (session) {
+        const today = getLocalDateString();
+        setDate(today);
+        await loadEntry(today);
+        await loadMeetings(today);
+
+        const initHabits = FIXED_HABITS.reduce((acc, habit) => {
+          acc[habit.id] = false;
+          return acc;
+        }, {} as { [key: string]: boolean });
+        setHabits(initHabits);
+      }
+    };
+    checkAuth();
+  }, [loadEntry, loadMeetings]);
+
+  // Auto-save text fields with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (date && (reflection !== '' || observations !== '')) {
+        saveEntryToSupabase({
+          reflection,
+          energy,
+          observations,
+          habits,
+          tasks,
+          written_to_ugmonk: writtenToUgmonk,
+        });
+      }
+    }, 2000); // Save 2 seconds after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [reflection, observations, date, energy, habits, tasks, writtenToUgmonk]);
+
+  const handleDateChange = async (newDate: string) => {
     setDate(newDate);
-    loadEntry(newDate);
+    await loadEntry(newDate);
+    await loadMeetings(newDate);
   };
 
-  const goToPreviousDay = () => {
+  const goToPreviousDay = async () => {
     const d = new Date(date + 'T00:00:00');
     d.setDate(d.getDate() - 1);
     const newDate = d.toISOString().split('T')[0];
-    handleDateChange(newDate);
+    await handleDateChange(newDate);
   };
 
-  const goToNextDay = () => {
+  const goToNextDay = async () => {
     const d = new Date(date + 'T00:00:00');
     d.setDate(d.getDate() + 1);
     const newDate = d.toISOString().split('T')[0];
-    handleDateChange(newDate);
+    await handleDateChange(newDate);
   };
 
   const formatDateDisplay = (dateStr: string) => {
@@ -114,8 +249,17 @@ export default function DailyTracker() {
     return `${dayName} ${month}/${day}/${year}`;
   };
 
-  const toggleHabit = (habitId: string) => {
-    setHabits((prev) => ({ ...prev, [habitId]: !prev[habitId] }));
+  const toggleHabit = async (habitId: string) => {
+    const updatedHabits = { ...habits, [habitId]: !habits[habitId] };
+    setHabits(updatedHabits);
+    await saveEntryToSupabase({
+      reflection,
+      energy,
+      observations,
+      habits: updatedHabits,
+      tasks,
+      written_to_ugmonk: writtenToUgmonk,
+    });
   };
 
   const addTask = () => {
@@ -130,47 +274,142 @@ export default function DailyTracker() {
     }
   };
 
-  const toggleTask = (taskId: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t))
-    );
+  const toggleTask = async (taskId: string) => {
+    const updatedTasks = tasks.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t));
+    setTasks(updatedTasks);
+    await saveEntryToSupabase({
+      reflection,
+      energy,
+      observations,
+      habits,
+      tasks: updatedTasks,
+      written_to_ugmonk: writtenToUgmonk,
+    });
   };
 
-  const deleteTask = (taskId: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+  const deleteTask = async (taskId: string) => {
+    const updatedTasks = tasks.filter((t) => t.id !== taskId);
+    setTasks(updatedTasks);
+    await saveEntryToSupabase({
+      reflection,
+      energy,
+      observations,
+      habits,
+      tasks: updatedTasks,
+      written_to_ugmonk: writtenToUgmonk,
+    });
   };
 
-  const addMeeting = () => {
+  const addMeeting = async () => {
     if (newMeeting.person.trim() || newMeeting.notes.trim()) {
-      const meeting: Meeting = {
-        id: Date.now().toString(),
-        person: newMeeting.person,
-        notes: newMeeting.notes,
-        granola_link: newMeeting.granola_link,
-      };
-      setMeetings((prev) => [...prev, meeting]);
-      setNewMeeting({ person: '', notes: '', granola_link: '' });
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.error('Not authenticated');
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('meetings')
+          .insert({
+            user_id: session.user.id,
+            date,
+            person: newMeeting.person,
+            notes: newMeeting.notes,
+            granola_link: newMeeting.granola_link,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating meeting:', error);
+          return;
+        }
+
+        if (data) {
+          setMeetings((prev) => [
+            ...prev,
+            {
+              id: data.id,
+              person: data.person,
+              notes: data.notes,
+              granola_link: data.granola_link,
+            },
+          ]);
+        }
+
+        setNewMeeting({ person: '', notes: '', granola_link: '' });
+      } catch (e) {
+        console.error('Error adding meeting:', e);
+      }
     }
   };
 
-  const deleteMeeting = (meetingId: string) => {
-    setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+  const deleteMeeting = async (meetingId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('Not authenticated');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('meetings')
+        .delete()
+        .eq('id', meetingId)
+        .eq('user_id', session.user.id);
+
+      if (error) {
+        console.error('Error deleting meeting:', error);
+        return;
+      }
+
+      setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+    } catch (e) {
+      console.error('Error deleting meeting:', e);
+    }
   };
 
-  const saveMeetingEdit = (meetingId: string, updates: { person: string; notes: string; granola_link: string }) => {
-    setMeetings((prev) =>
-      prev.map((m) =>
-        m.id === meetingId
-          ? {
-              ...m,
-              person: updates.person,
-              notes: updates.notes,
-              granola_link: updates.granola_link,
-            }
-          : m
-      )
-    );
-    setEditingMeetingId(null);
+  const saveMeetingEdit = async (meetingId: string, updates: { person: string; notes: string; granola_link: string }) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('Not authenticated');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('meetings')
+        .update({
+          person: updates.person,
+          notes: updates.notes,
+          granola_link: updates.granola_link,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', meetingId)
+        .eq('user_id', session.user.id);
+
+      if (error) {
+        console.error('Error updating meeting:', error);
+        return;
+      }
+
+      setMeetings((prev) =>
+        prev.map((m) =>
+          m.id === meetingId
+            ? {
+                ...m,
+                person: updates.person,
+                notes: updates.notes,
+                granola_link: updates.granola_link,
+              }
+            : m
+        )
+      );
+      setEditingMeetingId(null);
+    } catch (e) {
+      console.error('Error saving meeting edit:', e);
+    }
   };
 
   const MeetingEditForm = ({ meeting, onSave, onCancel, styles }: any) => {
@@ -191,40 +430,43 @@ export default function DailyTracker() {
     );
   };
 
-  const setEnergyAndSave = (emoji: string) => {
+  const setEnergyAndSave = async (emoji: string) => {
     setEnergy(emoji);
-    try {
-      const saved = localStorage.getItem(`dailys_${date}`);
-      const entry = saved ? JSON.parse(saved) : { date, reflection, observations, habits, tasks };
-      localStorage.setItem(`dailys_${date}`, JSON.stringify({
-        ...entry,
-        energy: emoji,
-      }));
-    } catch (e) {
-      console.error('Error saving energy:', e);
-    }
+    await saveEntryToSupabase({
+      reflection,
+      energy: emoji,
+      observations,
+      habits,
+      tasks,
+      written_to_ugmonk: writtenToUgmonk,
+    });
   };
 
-  const saveTaskEdit = (taskId: string, newText: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, text: newText } : t))
-    );
+  const saveTaskEdit = async (taskId: string, newText: string) => {
+    const updatedTasks = tasks.map((t) => (t.id === taskId ? { ...t, text: newText } : t));
+    setTasks(updatedTasks);
     setEditingTaskId(null);
+    await saveEntryToSupabase({
+      reflection,
+      energy,
+      observations,
+      habits,
+      tasks: updatedTasks,
+      written_to_ugmonk: writtenToUgmonk,
+    });
   };
 
   const toggleWrittenToUgmonk = async () => {
     const newStatus = !writtenToUgmonk;
     setWrittenToUgmonk(newStatus);
-    try {
-      const saved = localStorage.getItem(`dailys_${date}`);
-      const entry = saved ? JSON.parse(saved) : { date, reflection, habits, tasks };
-      localStorage.setItem(`dailys_${date}`, JSON.stringify({
-        ...entry,
-        written_to_ugmonk: newStatus,
-      }));
-    } catch (e) {
-      console.error('Error updating Ugmonk status:', e);
-    }
+    await saveEntryToSupabase({
+      reflection,
+      energy,
+      observations,
+      habits,
+      tasks,
+      written_to_ugmonk: newStatus,
+    });
   };
 
   const generateShareLink = (meeting: Meeting) => {
@@ -244,15 +486,14 @@ export default function DailyTracker() {
   const saveEntry = async () => {
     setLoading(true);
     try {
-      localStorage.setItem(`dailys_${date}`, JSON.stringify({
-        date,
+      await saveEntryToSupabase({
         reflection,
         energy,
         observations,
         habits,
         tasks,
         written_to_ugmonk: writtenToUgmonk,
-      }));
+      });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (e) {
@@ -262,6 +503,20 @@ export default function DailyTracker() {
     }
   };
 
+
+  if (!isAuthenticated) {
+    return (
+      <div style={styles.container}>
+        <div style={{ ...styles.content, justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+          <div style={{ textAlign: 'center' }}>
+            <h1 style={{ marginBottom: '1rem', fontSize: '24px', fontWeight: 600 }}>Please log in to continue</h1>
+            <p style={{ color: '#9ca084', marginBottom: '2rem' }}>You need to authenticate to use Dailys</p>
+            <a href="/login" style={{ ...styles.buttonPrimary, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>Go to Login</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
