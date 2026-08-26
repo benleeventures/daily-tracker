@@ -1,7 +1,7 @@
 -- Daily entries table for tracking daily reflections, habits, and tasks
 CREATE TABLE IF NOT EXISTS daily_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
   date TEXT NOT NULL, -- local date as YYYY-MM-DD (stored in local timezone, not UTC)
   reflection TEXT DEFAULT '',
   energy TEXT DEFAULT '', -- emoji representation
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS daily_entries (
 -- Meetings table for tracking meetings/conversations
 CREATE TABLE IF NOT EXISTS meetings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
   date TEXT NOT NULL, -- local date as YYYY-MM-DD
   person TEXT NOT NULL,
   notes TEXT DEFAULT '',
