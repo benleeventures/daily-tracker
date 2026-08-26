@@ -141,12 +141,15 @@ export default function DailyTracker() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        console.error('Not authenticated');
+        console.error('[SAVE] Not authenticated');
         return;
       }
 
+      console.log('[SAVE] Saving entry:', { entryId, date, hasReflection: entryData.reflection, hasTasks: entryData.tasks?.length, hasObservations: entryData.observations });
+
       if (entryId) {
         // Update existing entry
+        console.log('[SAVE] Updating existing entry:', entryId);
         const { error } = await supabase
           .from('daily_entries')
           .update({
@@ -157,11 +160,13 @@ export default function DailyTracker() {
           .eq('user_id', session.user.id);
 
         if (error) {
-          console.error('Error updating entry:', error);
+          console.error('[SAVE] Error updating entry:', error);
           return;
         }
+        console.log('[SAVE] Update successful');
       } else {
         // Create new entry
+        console.log('[SAVE] Creating new entry for date:', date);
         const { data, error } = await supabase
           .from('daily_entries')
           .insert({
@@ -173,16 +178,17 @@ export default function DailyTracker() {
           .single();
 
         if (error) {
-          console.error('Error creating entry:', error);
+          console.error('[SAVE] Error creating entry:', error);
           return;
         }
 
         if (data) {
+          console.log('[SAVE] Create successful, entryId:', data.id);
           setEntryId(data.id);
         }
       }
     } catch (e) {
-      console.error('Error saving entry to Supabase:', e);
+      console.error('[SAVE] Caught exception:', e);
     }
   }, [entryId, date]);
 
