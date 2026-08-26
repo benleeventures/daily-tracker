@@ -55,8 +55,11 @@ export default function DailyTracker() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         console.error('Not authenticated');
+        setIsAuthenticated(false);
         return;
       }
+
+      setIsAuthenticated(true);
 
       const { data, error } = await supabase
         .from('daily_entries')
@@ -84,6 +87,7 @@ export default function DailyTracker() {
         setReflection('');
         setEnergy('');
         setObservations('');
+        setHabits({});
         setTasks([]);
         setWrittenToUgmonk(false);
       }
@@ -92,6 +96,7 @@ export default function DailyTracker() {
       setReflection('');
       setEnergy('');
       setObservations('');
+      setHabits({});
       setTasks([]);
       setWrittenToUgmonk(false);
     }
@@ -190,15 +195,32 @@ export default function DailyTracker() {
         setDate(today);
         await loadEntry(today);
         await loadMeetings(today);
-
-        const initHabits = FIXED_HABITS.reduce((acc, habit) => {
-          acc[habit.id] = false;
-          return acc;
-        }, {} as { [key: string]: boolean });
-        setHabits(initHabits);
       }
     };
     checkAuth();
+
+    // Set up auth state change listener for cross-device sync
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
+      setIsAuthenticated(!!session);
+      if (session && event === 'SIGNED_IN') {
+        const today = getLocalDateString();
+        setDate(today);
+        await loadEntry(today);
+        await loadMeetings(today);
+      } else if (!session) {
+        setIsAuthenticated(false);
+        setEntryId(null);
+        setReflection('');
+        setEnergy('');
+        setObservations('');
+        setHabits({});
+        setTasks([]);
+        setMeetings([]);
+      }
+    });
+
+    return () => subscription?.unsubscribe();
   }, [loadEntry, loadMeetings]);
 
   // Auto-save text fields with debounce
@@ -218,6 +240,77 @@ export default function DailyTracker() {
 
     return () => clearTimeout(timer);
   }, [reflection, observations, date, energy, habits, tasks, writtenToUgmonk]);
+
+  // Periodic polling for cross-device sync (every 5 seconds when authenticated)
+  useEffect(() => {
+    if (!isAuthenticated || !date) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setIsAuthenticated(false);
+          return;
+        }
+
+        // Refresh current entry and meetings from server
+        const { data: entryData, error: entryError } = await supabase
+          .from('daily_entries')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('date', date)
+          .single();
+
+        if (!entryError && entryData) {
+          // Only update if data has changed (compare updated_at)
+          if (entryData.updated_at) {
+            // Update from server data
+            setReflection(entryData.reflection || '');
+            setEnergy(entryData.energy || '');
+            setObservations(entryData.observations || '');
+            setHabits(entryData.habits || {});
+            setTasks(entryData.tasks || []);
+            setWrittenToUgmonk(entryData.written_to_ugmonk || false);
+          }
+        }
+
+        // Refresh meetings
+        const { data: meetingsData, error: meetingsError } = await supabase
+          .from('meetings')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('date', date)
+          .order('created_at', { ascending: false });
+
+        if (!meetingsError && meetingsData) {
+          setMeetings(meetingsData.map(m => ({
+            id: m.id,
+            person: m.person,
+            notes: m.notes,
+            granola_link: m.granola_link,
+          })));
+        }
+      } catch (e) {
+        console.error('Polling error:', e);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [isAuthenticated, date]);
+
+  // Refresh data when window regains focus (user switches back from another tab/device)
+  useEffect(() => {
+    const handleFocus = async () => {
+      console.log('Window focused - refreshing data');
+      if (isAuthenticated && date) {
+        await loadEntry(date);
+        await loadMeetings(date);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isAuthenticated, date, loadEntry, loadMeetings]);
 
   const handleDateChange = async (newDate: string) => {
     setDate(newDate);
@@ -262,15 +355,31 @@ export default function DailyTracker() {
     });
   };
 
+  const generateTaskId = () => {
+    // Generate a more robust UUID-like ID instead of using Date.now()
+    // This prevents collisions when multiple tasks are added rapidly
+    return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   const addTask = () => {
     if (newTask.trim()) {
       const task = {
-        id: Date.now().toString(),
+        id: generateTaskId(),
         text: newTask,
         completed: false,
       };
-      setTasks((prev) => [...prev, task]);
+      const updatedTasks = [...tasks, task];
+      setTasks(updatedTasks);
       setNewTask('');
+      // Immediately save to Supabase
+      saveEntryToSupabase({
+        reflection,
+        energy,
+        observations,
+        habits,
+        tasks: updatedTasks,
+        written_to_ugmonk: writtenToUgmonk,
+      });
     }
   };
 
