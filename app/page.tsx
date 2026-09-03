@@ -49,6 +49,8 @@ export default function DailyTracker() {
   const [saved, setSaved] = useState(false);
   const [entryId, setEntryId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [carriedOverTasks, setCarriedOverTasks] = useState<Array<{ id: string; text: string; completed: boolean }>>([]);
+  const [showCarriedOver, setShowCarriedOver] = useState(true);
 
   const loadEntry = useCallback(async (entryDate: string) => {
     try {
@@ -102,6 +104,39 @@ export default function DailyTracker() {
     }
   }, []);
 
+  const loadCarriedOverTasks = useCallback(async (entryDate: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const prevDate = new Date(entryDate + 'T00:00:00');
+      prevDate.setDate(prevDate.getDate() - 1);
+      const prevDateStr = prevDate.toISOString().split('T')[0];
+
+      const { data, error } = await supabase
+        .from('daily_entries')
+        .select('tasks')
+        .eq('user_id', session.user.id)
+        .eq('date', prevDateStr)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading previous day tasks:', error);
+        return;
+      }
+
+      if (data && data.tasks) {
+        const incompleted = (data.tasks as Array<{ id: string; text: string; completed: boolean }>).filter(t => !t.completed);
+        setCarriedOverTasks(incompleted);
+      } else {
+        setCarriedOverTasks([]);
+      }
+    } catch (e) {
+      console.error('Error loading carried over tasks:', e);
+      setCarriedOverTasks([]);
+    }
+  }, []);
+
   const loadMeetings = useCallback(async (meetingDate: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -141,15 +176,12 @@ export default function DailyTracker() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        console.error('[SAVE] Not authenticated');
+        console.error('Not authenticated');
         return;
       }
 
-      console.log('[SAVE] Saving entry:', { entryId, date, hasReflection: entryData.reflection, hasTasks: entryData.tasks?.length, hasObservations: entryData.observations });
-
       if (entryId) {
         // Update existing entry
-        console.log('[SAVE] Updating existing entry:', entryId);
         const { error } = await supabase
           .from('daily_entries')
           .update({
@@ -160,13 +192,11 @@ export default function DailyTracker() {
           .eq('user_id', session.user.id);
 
         if (error) {
-          console.error('[SAVE] Error updating entry:', error);
+          console.error('Error updating entry:', error);
           return;
         }
-        console.log('[SAVE] Update successful');
       } else {
         // Create new entry
-        console.log('[SAVE] Creating new entry for date:', date);
         const { data, error } = await supabase
           .from('daily_entries')
           .insert({
@@ -178,17 +208,16 @@ export default function DailyTracker() {
           .single();
 
         if (error) {
-          console.error('[SAVE] Error creating entry:', error);
+          console.error('Error creating entry:', error);
           return;
         }
 
         if (data) {
-          console.log('[SAVE] Create successful, entryId:', data.id);
           setEntryId(data.id);
         }
       }
     } catch (e) {
-      console.error('[SAVE] Caught exception:', e);
+      console.error('Error saving entry to Supabase:', e);
     }
   }, [entryId, date]);
 
@@ -201,6 +230,7 @@ export default function DailyTracker() {
         setDate(today);
         await loadEntry(today);
         await loadMeetings(today);
+        await loadCarriedOverTasks(today);
       }
     };
     checkAuth();
@@ -214,6 +244,7 @@ export default function DailyTracker() {
         setDate(today);
         await loadEntry(today);
         await loadMeetings(today);
+        await loadCarriedOverTasks(today);
       } else if (!session) {
         setIsAuthenticated(false);
         setEntryId(null);
@@ -223,11 +254,12 @@ export default function DailyTracker() {
         setHabits({});
         setTasks([]);
         setMeetings([]);
+        setCarriedOverTasks([]);
       }
     });
 
     return () => subscription?.unsubscribe();
-  }, [loadEntry, loadMeetings]);
+  }, [loadEntry, loadMeetings, loadCarriedOverTasks]);
 
   // Auto-save text fields with debounce
   useEffect(() => {
@@ -322,6 +354,7 @@ export default function DailyTracker() {
     setDate(newDate);
     await loadEntry(newDate);
     await loadMeetings(newDate);
+    await loadCarriedOverTasks(newDate);
   };
 
   const goToPreviousDay = async () => {
@@ -387,6 +420,24 @@ export default function DailyTracker() {
         written_to_ugmonk: writtenToUgmonk,
       });
     }
+  };
+
+  const carryOverTask = (carriedTask: { id: string; text: string; completed: boolean }) => {
+    const newTask = {
+      id: generateTaskId(),
+      text: carriedTask.text,
+      completed: false,
+    };
+    const updatedTasks = [...tasks, newTask];
+    setTasks(updatedTasks);
+    saveEntryToSupabase({
+      reflection,
+      energy,
+      observations,
+      habits,
+      tasks: updatedTasks,
+      written_to_ugmonk: writtenToUgmonk,
+    });
   };
 
   const toggleTask = async (taskId: string) => {
@@ -754,17 +805,20 @@ export default function DailyTracker() {
                   </div>
                 ) : (
                   <>
-                    <label style={styles.checkboxItem} onClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
                       <input
                         type="checkbox"
                         checked={task.completed}
                         onChange={() => toggleTask(task.id)}
                         style={styles.checkbox}
                       />
-                      <span style={{ textDecoration: task.completed ? 'line-through' : 'none', cursor: 'pointer' }}>
+                      <span
+                        style={{ textDecoration: task.completed ? 'line-through' : 'none', cursor: 'pointer', flex: 1 }}
+                        onClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }}
+                      >
                         {task.text}
                       </span>
-                    </label>
+                    </div>
                     <button
                       onClick={() => deleteTask(task.id)}
                       style={styles.deleteBtn}
@@ -793,6 +847,50 @@ export default function DailyTracker() {
             </button>
           </div>
         </div>
+
+        {/* Carried Over Tasks */}
+        {carriedOverTasks.length > 0 && (
+        <div style={styles.section}>
+          <button
+            onClick={() => setShowCarriedOver(!showCarriedOver)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: '11px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              color: '#9ca084',
+              cursor: 'pointer',
+              padding: '0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            {showCarriedOver ? '▼' : '▶'} Carried over from yesterday
+          </button>
+          {showCarriedOver && (
+            <div style={styles.checklist}>
+              {carriedOverTasks.map((task) => (
+                <div key={task.id} style={styles.taskRow}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={() => carryOverTask(task)}
+                      style={styles.checkbox}
+                    />
+                    <span style={{ color: '#9ca084', fontSize: '14px', flex: 1 }}>
+                      {task.text}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        )}
 
         {/* Buttons */}
         <div style={styles.buttonGroup}>
