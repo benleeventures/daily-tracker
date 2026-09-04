@@ -649,6 +649,19 @@ export default function DailyTracker() {
     });
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setEntryId(null);
+    setReflection('');
+    setEnergy('');
+    setObservations('');
+    setHabits({});
+    setTasks([]);
+    setMeetings([]);
+    setCarriedOverTasks([]);
+  };
+
   const saveEntry = async () => {
     setLoading(true);
     try {
@@ -686,13 +699,30 @@ export default function DailyTracker() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style={styles.logo}>
-          <rect width="40" height="40" fill="none"/>
-          <rect width="22" height="22" x="9" y="9" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-          <rect width="14" height="14" x="13" y="13" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-        </svg>
-        <span style={styles.brandText}>Dailys</span>
+      <div style={{ ...styles.header, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style={styles.logo}>
+            <rect width="40" height="40" fill="none"/>
+            <rect width="22" height="22" x="9" y="9" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            <rect width="14" height="14" x="13" y="13" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+          <span style={styles.brandText}>Dailys</span>
+        </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            background: 'transparent',
+            border: '0.5px solid #e8e3db',
+            color: '#9ca084',
+            fontSize: '12px',
+            padding: '6px 12px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Logout
+        </button>
       </div>
       <div style={styles.tabBar}>
         <button
