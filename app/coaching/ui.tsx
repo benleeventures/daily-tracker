@@ -5,12 +5,12 @@ import type { CSSProperties, ReactNode } from 'react';
 export const c = {
   bg: '#faf8f3',
   ink: '#3d3a33',
-  muted: '#9ca084',
+  muted: '#676d55',
   line: '#e8e3db',
   gold: '#c6a96c',
-  goldDeep: '#a88a4f',
+  goldDeep: '#876a30',
   paper: '#fffdf8',
-  alert: '#b5654a',
+  alert: '#a0523a',
 };
 
 export const font = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';

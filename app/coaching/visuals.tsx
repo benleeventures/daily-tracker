@@ -83,6 +83,7 @@ export function WheelVisual({ answers, fields }: { answers: Answers; fields: { i
 }
 
 const RECLAIM = ['Delegate', 'Automate', 'Drop'];
+const GREEN = '#5a7340';
 const fmt = (n: number) => (Math.round(n * 10) / 10).toString();
 
 // The Energy Audit's payoff: where the week actually goes, and how much of it you're taking back.
@@ -114,7 +115,8 @@ export function EnergySummary({ answers }: { answers: Answers }) {
   const neutral = total - drain - fuel;
   const reclaim = scored.filter((r) => r.energy < 0 && RECLAIM.includes(r.action)).reduce((a, r) => a + r.hours, 0);
   const worst = [...scored].filter((r) => r.energy < 0).sort((a, b) => a.hours * a.energy - b.hours * b.energy).slice(0, 3);
-  const best = [...scored].filter((r) => r.energy > 0).sort((a, b) => b.hours * b.energy - a.hours * a.energy).slice(0, 3);
+
+  const maxImpact = Math.max(...scored.map((r) => Math.abs(r.hours * r.energy)), 0);
 
   const stat = (n: string, label: string, color: string = c.ink) => (
     <div>
@@ -129,17 +131,54 @@ export function EnergySummary({ answers }: { answers: Answers }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         {stat(fmt(total), 'hours a week you mapped')}
         {stat(fmt(drain), 'hours draining you', drain > 0 ? c.alert : c.ink)}
-        {stat(fmt(reclaim), 'hours you’re taking back', reclaim > 0 ? '#6f8a4f' : c.ink)}
+        {stat(fmt(reclaim), 'hours you’re taking back', reclaim > 0 ? GREEN : c.ink)}
       </div>
 
       <div style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', margin: '18px 0 6px', background: c.line }} aria-hidden>
-        <span style={{ width: `${(fuel / total) * 100}%`, background: '#6f8a4f' }} />
+        <span style={{ width: `${(fuel / total) * 100}%`, background: GREEN }} />
         <span style={{ width: `${(neutral / total) * 100}%`, background: '#d9d2c3' }} />
         <span style={{ width: `${(drain / total) * 100}%`, background: c.alert }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: c.muted }}>
         <span>Fuels you {Math.round((fuel / total) * 100)}%</span>
         <span>Drains you {Math.round((drain / total) * 100)}%</span>
+      </div>
+
+      <div style={{ marginTop: 22 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 2px' }}>Your energy map</p>
+        <p style={{ fontSize: 12, color: c.muted, margin: '0 0 10px' }}>Longer bar = bigger effect on your week (hours × rating).</p>
+        {[...scored].sort((a, b) => b.hours * b.energy - a.hours * a.energy).map((r) => {
+          const impact = r.hours * r.energy;
+          const w = maxImpact ? (Math.abs(impact) / maxImpact) * 50 : 0;
+          return (
+            <div key={r.task} style={{ margin: '0 0 8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13, marginBottom: 3 }}>
+                <span>{r.task}</span>
+                <span style={{ color: impact < 0 ? c.alert : impact > 0 ? GREEN : c.muted, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                  {impact > 0 ? '+' : ''}{fmt(impact)}
+                </span>
+              </div>
+              <div style={{ position: 'relative', height: 8, background: '#efebe3', borderRadius: 4 }}>
+                <span style={{ position: 'absolute', left: '50%', top: -2, bottom: -2, width: 1, background: '#cfc7b8' }} />
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    borderRadius: 4,
+                    background: impact < 0 ? c.alert : GREEN,
+                    left: impact < 0 ? `${50 - w}%` : '50%',
+                    width: `${w}%`,
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: c.muted, marginTop: 2 }}>
+          <span>← drains you</span>
+          <span>fuels you →</span>
+        </div>
       </div>
 
       {worst.length > 0 && (
@@ -150,14 +189,6 @@ export function EnergySummary({ answers }: { answers: Answers }) {
               <span>{r.task}</span>
               <span style={{ whiteSpace: 'nowrap', color: r.action ? c.ink : c.alert }}>{r.action || 'No decision yet'}</span>
             </div>
-          ))}
-        </div>
-      )}
-      {best.length > 0 && (
-        <div style={{ marginTop: 14 }}>
-          <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 6px' }}>Protect these</p>
-          {best.map((r) => (
-            <div key={r.task} style={{ fontSize: 13, padding: '5px 0', borderTop: `0.5px solid ${c.line}` }}>{r.task}</div>
           ))}
         </div>
       )}

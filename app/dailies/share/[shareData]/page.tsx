@@ -24,7 +24,7 @@ export default function ShareMeeting() {
       <div style={{ minHeight: '100vh', background: '#faf8f3', color: '#3d3a33', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', padding: '2rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ maxWidth: '640px', textAlign: 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '1rem' }}>Invalid share link</h1>
-          <p style={{ color: '#9ca084' }}>This link may have expired or is invalid.</p>
+          <p style={{ color: '#676d55' }}>This link may have expired or is invalid.</p>
         </div>
       </div>
     );
@@ -57,7 +57,7 @@ export default function ShareMeeting() {
 
           {meeting.notes && (
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9ca084', display: 'block', marginBottom: '0.5rem' }}>Notes</label>
+              <label style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#676d55', display: 'block', marginBottom: '0.5rem' }}>Notes</label>
               <div style={{ fontSize: '15px', lineHeight: '1.6', color: '#3d3a33', whiteSpace: 'pre-wrap' }}>
                 {meeting.notes}
               </div>
@@ -66,15 +66,15 @@ export default function ShareMeeting() {
 
           {meeting.granola_link && (
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#9ca084', display: 'block', marginBottom: '0.5rem' }}>Meeting link</label>
-              <a href={meeting.granola_link} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#c6a96c', textDecoration: 'none', wordBreak: 'break-all' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#676d55', display: 'block', marginBottom: '0.5rem' }}>Meeting link</label>
+              <a href={meeting.granola_link} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: '#876a30', textDecoration: 'none', wordBreak: 'break-all' }}>
                 {meeting.granola_link} ↗
               </a>
             </div>
           )}
         </div>
 
-        <p style={{ fontSize: '13px', color: '#9ca084', textAlign: 'center' }}>Shared via Dailys</p>
+        <p style={{ fontSize: '13px', color: '#676d55', textAlign: 'center' }}>Shared via Dailys</p>
       </div>
     </div>
   );

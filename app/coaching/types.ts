@@ -43,6 +43,7 @@ export type Exercise = {
   videos?: { label: string; url: string }[]; // Loom/YouTube share URLs
   sections: Section[];
   visual?: 'ikigai' | 'wheel' | 'energy'; // optional summary built from the answers
+  flow?: 'energy'; // replaces the section-by-section form with a guided step flow
   visualTop?: boolean; // show the visual above the prompts so people see what they're building
   steps?: string[]; // "How this works", in plain words
   example?: { note: string; answers: Answers }; // Ben's own completed version, shown read-only

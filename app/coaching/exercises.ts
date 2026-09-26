@@ -55,12 +55,9 @@ export const EXERCISES: Exercise[] = [
     intro: [
       'I’ve done this every quarter since 2021, and it’s the first thing I have every client do. Time management is the wrong frame. You can have an empty calendar and still be exhausted. Energy is the real currency.',
       'When I ran mine, meditation and surfing were at the top of the list. Managing people directly, vendor calls, and back-to-back meetings were at the bottom, and that’s where most of my week was going.',
-      'Pull up your last two weeks of calendar. List everything that takes your time, work and life. Rate how each one makes you feel, then make a call on it. Your summary builds itself at the bottom.',
+      'Pull up your last two weeks of calendar. Five short steps, one job each. Your results calculate themselves at the end.',
     ],
-    videos: [
-      { label: 'Part 1: Identify your energy drainers', url: 'https://www.loom.com/share/1b59b3d4267d4d9383e5441a55584219' },
-      { label: 'Part 2: Stop holding yourself back', url: 'https://www.loom.com/share/0288fef3e7c64ae798ba96fbd2c9412c' },
-    ],
+    flow: 'energy',
     sections: [
       {
         title: 'Your week',
@@ -565,10 +562,11 @@ const DEFAULT_STEPS = ['Type your answers in your own words. Short is fine.', 'E
 const EXTRAS: Record<string, Partial<Exercise>> = {
   'energy-audit': {
     steps: [
-      'List what takes your time each week. Rough hours are fine.',
-      'Tap a number for how it makes you feel: −3 you dread it, +3 it lights you up.',
-      'Tap what you’ll do about it.',
-      'That’s it. Your summary does the math at the bottom, automatically.',
+      'List what takes your time each week, with rough hours.',
+      'Rate each one: tap −3 if it drains you, +3 if it lights you up.',
+      'Decide what to do about the drains.',
+      'Name what you’re tolerating and what you’ll start.',
+      'Get your results. The math is done for you.',
     ],
     example: {
       note: 'My real audit from mid-2024, while building re:center. Names swapped for roles.',

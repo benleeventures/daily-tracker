@@ -711,7 +711,7 @@ export default function DailyTracker() {
         <div style={{ ...styles.content, justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
           <div style={{ textAlign: 'center' }}>
             <h1 style={{ marginBottom: '1rem', fontSize: '24px', fontWeight: 600 }}>Please log in to continue</h1>
-            <p style={{ color: '#9ca084', marginBottom: '2rem' }}>You need to authenticate to use Dailys</p>
+            <p style={{ color: '#676d55', marginBottom: '2rem' }}>You need to authenticate to use Dailys</p>
             <a href="/login?next=/dailies" style={{ ...styles.buttonPrimary, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>Go to Login</a>
           </div>
         </div>
@@ -731,7 +731,7 @@ export default function DailyTracker() {
           <span style={styles.brandText}>Dailys</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '12px', color: saveStatus === 'error' ? '#b5654a' : '#9ca084' }} aria-live="polite">
+        <span style={{ fontSize: '12px', color: saveStatus === 'error' ? '#a0523a' : '#676d55' }} aria-live="polite">
           {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved' : saveStatus === 'error' ? 'Not saved — retrying' : ''}
         </span>
         <button
@@ -739,7 +739,7 @@ export default function DailyTracker() {
           style={{
             background: 'transparent',
             border: '0.5px solid #e8e3db',
-            color: '#9ca084',
+            color: '#676d55',
             fontSize: '12px',
             padding: '6px 12px',
             borderRadius: '4px',
@@ -807,7 +807,7 @@ export default function DailyTracker() {
                     />
                     <button
                       onClick={() => saveTaskEdit(task.id, editingTaskText)}
-                      style={{ ...styles.deleteBtn, color: '#c9a876' }}
+                      style={{ ...styles.deleteBtn, color: '#876a30' }}
                     >
                       ✓
                     </button>
@@ -878,7 +878,7 @@ export default function DailyTracker() {
                       style={styles.checkbox}
                       aria-label={`Bring "${task.text}" to today`}
                     />
-                    <span style={{ color: '#9ca084', fontSize: '14px', flex: 1 }}>
+                    <span style={{ color: '#676d55', fontSize: '14px', flex: 1 }}>
                       {task.text}
                     </span>
                   </div>
@@ -981,11 +981,11 @@ export default function DailyTracker() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '8px' }}>{meeting.person}</div>
                     {meeting.notes && <div style={{ fontSize: '13px', color: '#3d3a33', lineHeight: '1.5', whiteSpace: 'pre-wrap', marginBottom: '8px' }}>{meeting.notes}</div>}
-                    {meeting.granola_link && <div style={{ fontSize: '12px', color: '#c9a876', marginBottom: '8px' }}><a href={meeting.granola_link} target="_blank" rel="noopener noreferrer" style={{ color: '#c9a876', textDecoration: 'none' }}>Granola →</a></div>}
+                    {meeting.granola_link && <div style={{ fontSize: '12px', color: '#876a30', marginBottom: '8px' }}><a href={meeting.granola_link} target="_blank" rel="noopener noreferrer" style={{ color: '#876a30', textDecoration: 'none' }}>Granola →</a></div>}
                   </div>
                   <div style={{ display: 'flex', gap: '4px' }}>
-                    <button onClick={() => generateShareLink(meeting)} style={{ ...styles.deleteBtn, color: '#c9a876', fontSize: '14px' }} title="Share notes">↗</button>
-                    <button onClick={() => setEditingMeetingId(meeting.id)} style={{ ...styles.deleteBtn, color: '#c9a876' }}>✎</button>
+                    <button onClick={() => generateShareLink(meeting)} style={{ ...styles.deleteBtn, color: '#876a30', fontSize: '14px' }} title="Share notes">↗</button>
+                    <button onClick={() => setEditingMeetingId(meeting.id)} style={{ ...styles.deleteBtn, color: '#876a30' }}>✎</button>
                     <button onClick={() => deleteMeeting(meeting.id)} style={styles.deleteBtn}>×</button>
                   </div>
                 </div>
@@ -1042,7 +1042,7 @@ const styles = {
     fontWeight: 600,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.5px',
-    color: '#9ca084',
+    color: '#676d55',
     cursor: 'pointer',
     padding: 0,
     display: 'flex',
@@ -1055,7 +1055,7 @@ const styles = {
     background: 'transparent',
     border: 'none',
     fontSize: '12px',
-    color: '#c9a876',
+    color: '#876a30',
     cursor: 'pointer',
     padding: 0,
     fontFamily: 'inherit',
@@ -1131,7 +1131,7 @@ const styles = {
     background: 'transparent',
     border: 'none',
     fontSize: '13px',
-    color: '#9ca084',
+    color: '#676d55',
     cursor: 'pointer',
     fontFamily: 'inherit',
     width: 'fit-content',
@@ -1146,7 +1146,7 @@ const styles = {
     fontWeight: 600 as const,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.5px',
-    color: '#9ca084',
+    color: '#676d55',
   },
   textarea: {
     background: 'transparent',
@@ -1211,7 +1211,7 @@ const styles = {
     border: '1.5px solid #c9a876',
     borderRadius: '4px',
     background: 'transparent',
-    color: '#c9a876',
+    color: '#876a30',
     fontSize: '16px',
     cursor: 'pointer',
     fontWeight: 'bold' as const,
@@ -1222,7 +1222,7 @@ const styles = {
   deleteBtn: {
     background: 'none',
     border: 'none',
-    color: '#9ca084',
+    color: '#676d55',
     fontSize: '18px',
     cursor: 'pointer',
     padding: '4px 8px',
@@ -1235,7 +1235,7 @@ const styles = {
   buttonPrimary: {
     flex: 1,
     padding: '10px 16px',
-    background: '#c9a876',
+    background: '#876a30',
     color: 'white',
     border: 'none',
     borderRadius: '6px',
@@ -1269,11 +1269,11 @@ const styles = {
     padding: '8px 0',
   },
   tabButtonActive: {
-    color: '#c9a876',
+    color: '#876a30',
     borderBottom: '2px solid #c9a876',
   },
   tabButtonInactive: {
-    color: '#9ca084',
+    color: '#676d55',
   },
   meetingItem: {
     display: 'flex',
@@ -1302,7 +1302,7 @@ const styles = {
     borderRadius: '4px',
     padding: '8px 12px',
     fontSize: '12px',
-    color: '#c9a876',
+    color: '#876a30',
     cursor: 'pointer',
     fontFamily: 'inherit',
     fontWeight: 500 as const,

@@ -117,7 +117,7 @@ export default function CoachingHub() {
         return (
           <section key={phase.id} style={{ margin: '1.75rem 0 2.5rem' }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
-              <span style={{ fontSize: 13, color: c.gold, fontVariantNumeric: 'tabular-nums' }}>0{phase.number}</span>
+              <span style={{ fontSize: 13, color: c.goldDeep, fontVariantNumeric: 'tabular-nums' }}>0{phase.number}</span>
               <div>
                 <h2 style={s.h2}>{phase.title}</h2>
                 <p style={{ ...s.small, margin: '0 0 0.75rem' }}>{phase.question}</p>

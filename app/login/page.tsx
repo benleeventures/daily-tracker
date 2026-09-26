@@ -112,7 +112,7 @@ const styles = {
     margin: '16px auto 0',
     background: 'transparent',
     border: 'none',
-    color: '#a88a4f',
+    color: '#876a30',
     fontSize: '13px',
     cursor: 'pointer',
     fontFamily: 'inherit',
@@ -185,7 +185,7 @@ const styles = {
   },
   button: {
     padding: '10px 16px',
-    background: '#c9a876',
+    background: '#876a30',
     color: 'white',
     border: 'none',
     borderRadius: '6px',

@@ -61,6 +61,6 @@ const styles = {
     textDecoration: 'none',
   },
   name: { fontSize: '16px', fontWeight: 500, minWidth: '96px' },
-  blurb: { fontSize: '14px', color: '#9ca084', flex: 1 },
+  blurb: { fontSize: '14px', color: '#676d55', flex: 1 },
   arrow: { color: '#c6a96c' },
 } as const;

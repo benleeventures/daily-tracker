@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { EnergyFlow } from './energy-flow';
 import type { Answers, Column, Exercise, Field, Row } from './types';
 import { EnergySummary, IkigaiVisual, WheelVisual } from './visuals';
 import { c, s } from './ui';
@@ -14,11 +15,12 @@ function embedUrl(url: string) {
 
 // Everything between the title and the "mark as done" footer: how-it-works, a switch to Ben's
 // example, videos, prompts, and the auto-built visual. Shared by the portal and public pages.
-export function ExerciseBody({ exercise, answers, onChange, readOnly = false }: {
+export function ExerciseBody({ exercise, answers, onChange, readOnly = false, resultsExtra }: {
   exercise: Exercise;
   answers: Answers;
   onChange: (id: string, value: Answers[string]) => void;
   readOnly?: boolean;
+  resultsExtra?: ReactNode; // guided flows: shown on the final results step (e.g. the public lead form)
 }) {
   const [showExample, setShowExample] = useState(false);
   const viewing = showExample && exercise.example ? exercise.example.answers : answers;
@@ -76,9 +78,25 @@ export function ExerciseBody({ exercise, answers, onChange, readOnly = false }: 
         </div>
       )}
 
-      {exercise.visualTop && visual}
+      {exercise.flow === 'energy' && (
+        <EnergyFlow
+          key={showExample ? 'example' : 'mine'}
+          answers={viewing}
+          onChange={(id, v) => !locked && onChange(id, v)}
+          readOnly={locked}
+          startAtResults={showExample || readOnly}
+          fields={{
+            tolerating: exercise.sections.flatMap((sec) => sec.fields).find((f) => f.id === 'tolerating'),
+            start: exercise.sections.flatMap((sec) => sec.fields).find((f) => f.id === 'start'),
+          }}
+          resultsExtra={showExample ? undefined : resultsExtra}
+          closing={showExample ? undefined : exercise.closing}
+        />
+      )}
 
-      {exercise.sections.map((sec) => (
+      {!exercise.flow && exercise.visualTop && visual}
+
+      {!exercise.flow && exercise.sections.map((sec) => (
         <section key={sec.title} style={{ marginTop: '2.75rem' }}>
           <h2 style={s.h2}>{sec.title}</h2>
           {sec.intro && <p style={{ ...s.small, fontSize: 14, margin: '0 0 1rem' }}>{sec.intro}</p>}
@@ -95,9 +113,9 @@ export function ExerciseBody({ exercise, answers, onChange, readOnly = false }: 
         </section>
       ))}
 
-      {!exercise.visualTop && visual}
+      {!exercise.flow && !exercise.visualTop && visual}
 
-      {exercise.closing && !showExample && <p style={{ ...s.body, marginTop: '2.5rem', fontStyle: 'italic' }}>{exercise.closing}</p>}
+      {exercise.closing && !showExample && !exercise.flow && <p style={{ ...s.body, marginTop: '2.5rem', fontStyle: 'italic' }}>{exercise.closing}</p>}
     </>
   );
 }
@@ -217,7 +235,7 @@ function chip(active: boolean, filled: boolean, readOnly: boolean, extra: React.
   };
 }
 
-const ratingColor = (v: number) => (v > 0 ? '#6f8a4f' : v < 0 ? c.alert : c.muted);
+const ratingColor = (v: number) => (v > 0 ? '#5a7340' : v < 0 ? c.alert : c.muted);
 
 function TableField({ field, value, onChange, readOnly }: {
   field: Extract<Field, { kind: 'table' }>;
