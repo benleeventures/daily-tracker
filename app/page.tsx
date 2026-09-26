@@ -3,6 +3,7 @@ import StandaloneRedirect from './standalone-redirect';
 
 const tools = [
   { href: '/dailies', name: 'Dailys', blurb: 'Tasks, habits, energy, meeting notes' },
+  { href: '/coaching', name: 'Coaching', blurb: 'Client exercises, plans, and progress' },
 ];
 
 export default function Home() {
