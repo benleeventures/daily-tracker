@@ -80,13 +80,13 @@ export default function PublicEnergyAudit() {
           {sendState === 'sent' ? (
             <>
               <h2 style={s.h2}>Got it.</h2>
-              <p style={s.body}>I’ll look through your audit and get back to you. Your answers are still saved on this device if you want to keep working.</p>
+              <p style={s.body}>I’ll read through your audit. Your answers are still saved on this device if you want to keep working.</p>
             </>
           ) : (
             <form onSubmit={send}>
               <h2 style={s.h2}>Want a second set of eyes?</h2>
               <p style={s.body}>
-                Send me your audit and I’ll tell you the one thing I’d change first.
+                Send it to me. I read every one, and I’ll reach out if I see something.
               </p>
               <div style={{ display: 'grid', gap: 8 }}>
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" aria-label="Your name" style={s.input} autoComplete="name" />
