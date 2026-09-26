@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase';
 import { EXERCISES, PHASES } from '../exercises';
 import { formatDue, statusOf, useCoachingSession, type Assignment, type Profile, type Response } from '../data';
 import { Loading, Shell, StatusDot, c, s } from '../ui';
+import { ActionItems, Sessions } from '../items';
+import { EnergySummary } from '../visuals';
+import type { Answers } from '../types';
 
 export default function ClientsPage() {
   const { profile } = useCoachingSession();
@@ -81,7 +84,58 @@ export default function ClientsPage() {
           })}
         </ul>
       )}
+
+      <hr style={s.rule} />
+      <Leads />
     </Shell>
+  );
+}
+
+type Lead = { id: string; name: string; email: string; note: string; answers: Answers; created_at: string };
+
+// Submissions from the public Energy Audit at /energy-audit
+function Leads() {
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.from('energy_audit_leads').select('*').order('created_at', { ascending: false }).then(({ data }) => setLeads((data || []) as Lead[]));
+  }, []);
+
+  return (
+    <section>
+      <h2 style={s.h2}>Energy Audit leads</h2>
+      <p style={{ ...s.small, margin: '0 0 0.75rem' }}>
+        From the free audit at <Link href="/energy-audit" style={{ color: c.goldDeep }}>teambenlee.com/energy-audit</Link>.
+      </p>
+      {leads.length === 0 ? (
+        <p style={s.small}>None yet.</p>
+      ) : (
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, borderTop: `0.5px solid ${c.line}` }}>
+          {leads.map((l) => {
+            const open = openId === l.id;
+            return (
+              <li key={l.id} style={{ borderBottom: `0.5px solid ${c.line}` }}>
+                <button onClick={() => setOpenId(open ? null : l.id)} aria-expanded={open} style={{ all: 'unset', boxSizing: 'border-box', width: '100%', cursor: 'pointer', padding: '12px 0', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <span>
+                    <span style={{ fontWeight: 500 }}>{l.name || l.email}</span>
+                    <span style={{ ...s.small, display: 'block' }}>{l.email} · {new Date(l.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  </span>
+                  <span style={{ fontSize: 12, color: c.muted }}>{open ? '▲' : '▼'}</span>
+                </button>
+                {open && (
+                  <div style={{ paddingBottom: 12 }}>
+                    {l.note && <p style={{ ...s.body, fontSize: 15, whiteSpace: 'pre-wrap' }}>“{l.note}”</p>}
+                    <EnergySummary answers={l.answers} />
+                    <a href={`mailto:${l.email}?subject=${encodeURIComponent('Your Energy Audit')}`} style={{ fontSize: 13, color: c.goldDeep }}>Reply by email ↗</a>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -124,6 +178,13 @@ function ClientDetail({ client, assignments, responses, onChange }: {
         </div>
       </div>
 
+      <p style={{ ...s.eyebrow, margin: '0 0 6px' }}>Action items</p>
+      <div style={{ marginBottom: '1.5rem' }}><ActionItems clientId={client.user_id} /></div>
+
+      <p style={{ ...s.eyebrow, margin: '0 0 6px' }}>Sessions</p>
+      <div style={{ marginBottom: '1.75rem' }}><Sessions clientId={client.user_id} canEdit /></div>
+
+      <p style={{ ...s.eyebrow, margin: '0 0 6px' }}>Exercises</p>
       {PHASES.map((phase) => (
         <div key={phase.id} style={{ marginBottom: '1rem' }}>
           <p style={{ ...s.eyebrow, margin: '0 0 4px' }}>0{phase.number} {phase.title}</p>

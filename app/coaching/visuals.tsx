@@ -1,7 +1,8 @@
-import type { Answers } from './types';
+import type { Answers, Row } from './types';
 import { c, font } from './ui';
 
-const listOf = (v: Answers[string] | undefined) => (Array.isArray(v) ? v.filter((x) => x && x.trim()) : []);
+const listOf = (v: Answers[string] | undefined) =>
+  Array.isArray(v) ? (v as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim() !== '') : [];
 
 // Four overlapping circles filled from the Ikigai answers; the one-line statement sits in the middle.
 export function IkigaiVisual({ answers }: { answers: Answers }) {
@@ -33,22 +34,25 @@ export function IkigaiVisual({ answers }: { answers: Answers }) {
               <text x={p.x} y={p.y} textAnchor={p.anchor} fontSize={11} fontWeight={600} fill={c.goldDeep} letterSpacing="0.6">
                 {ci.label.toUpperCase()}
               </text>
+              {items.length === 0 && (
+                <text x={p.x} y={p.y + 15} textAnchor={p.anchor} fontSize={10.5} fill={c.muted} fontStyle="italic">your answers here</text>
+              )}
               {items.map((it, i) => (
                 <text key={i} x={p.x} y={p.y + 15 + i * 13} textAnchor={p.anchor} fontSize={10.5} fill={c.ink}>
-                  {it.length > 22 ? it.slice(0, 21) + '…' : it}
+                  {it.length > 19 ? it.slice(0, 18) + '…' : it}
                 </text>
               ))}
             </g>
           );
         })}
-        <foreignObject x={150} y={170} width={100} height={60}>
-          <div style={{ fontFamily: font, fontSize: 10.5, lineHeight: 1.25, textAlign: 'center', color: c.ink, fontWeight: 600, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {statement || 'Ikigai'}
+        <foreignObject x={160} y={165} width={80} height={70}>
+          <div style={{ fontFamily: font, fontSize: 9.5, lineHeight: 1.2, textAlign: 'center', color: c.ink, fontWeight: 600, height: 70, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {statement || 'Your Ikigai'}
           </div>
         </foreignObject>
       </svg>
       <figcaption style={{ textAlign: 'center', fontSize: 12, color: c.muted, marginTop: 8 }}>
-        Fills in from your answers.
+        This draws itself as you fill in the four lists. Nothing to design.
       </figcaption>
     </figure>
   );
@@ -74,6 +78,89 @@ export function WheelVisual({ answers, fields }: { answers: Answers; fields: { i
           </div>
         );
       })}
+    </figure>
+  );
+}
+
+const RECLAIM = ['Delegate', 'Automate', 'Drop'];
+const fmt = (n: number) => (Math.round(n * 10) / 10).toString();
+
+// The Energy Audit's payoff: where the week actually goes, and how much of it you're taking back.
+// Mirrors the original spreadsheet math: impact = weekly hours × energy rating (−3…+3).
+export function EnergySummary({ answers }: { answers: Answers }) {
+  const rows = (Array.isArray(answers.tasks) ? (answers.tasks as unknown[]) : []).filter(
+    (r): r is Row => typeof r === 'object' && r !== null
+  );
+  const scored = rows
+    .map((r) => ({
+      task: typeof r.task === 'string' ? r.task.trim() : '',
+      hours: typeof r.hours === 'number' ? r.hours : 0,
+      energy: typeof r.energy === 'number' ? r.energy : null,
+      action: typeof r.action === 'string' ? r.action : '',
+    }))
+    .filter((r) => r.task && r.hours > 0 && r.energy !== null) as { task: string; hours: number; energy: number; action: string }[];
+
+  if (scored.length === 0) {
+    return (
+      <p style={{ fontSize: 13, color: c.muted, margin: '2rem 0', textAlign: 'center' }}>
+        Add hours and an energy rating to a few tasks and your summary shows up here.
+      </p>
+    );
+  }
+
+  const total = scored.reduce((a, r) => a + r.hours, 0);
+  const drain = scored.filter((r) => r.energy < 0).reduce((a, r) => a + r.hours, 0);
+  const fuel = scored.filter((r) => r.energy > 0).reduce((a, r) => a + r.hours, 0);
+  const neutral = total - drain - fuel;
+  const reclaim = scored.filter((r) => r.energy < 0 && RECLAIM.includes(r.action)).reduce((a, r) => a + r.hours, 0);
+  const worst = [...scored].filter((r) => r.energy < 0).sort((a, b) => a.hours * a.energy - b.hours * b.energy).slice(0, 3);
+  const best = [...scored].filter((r) => r.energy > 0).sort((a, b) => b.hours * b.energy - a.hours * a.energy).slice(0, 3);
+
+  const stat = (n: string, label: string, color: string = c.ink) => (
+    <div>
+      <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: '-0.8px', color, fontVariantNumeric: 'tabular-nums' }}>{n}</div>
+      <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.35 }}>{label}</div>
+    </div>
+  );
+
+  return (
+    <figure style={{ margin: '2.5rem 0', padding: '20px 18px', background: c.paper, border: `0.5px solid ${c.line}`, borderRadius: 6 }} aria-label="Your energy summary">
+      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: c.muted, margin: '0 0 14px' }}>Your week, by energy</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        {stat(fmt(total), 'hours a week you mapped')}
+        {stat(fmt(drain), 'hours draining you', drain > 0 ? c.alert : c.ink)}
+        {stat(fmt(reclaim), 'hours you’re taking back', reclaim > 0 ? '#6f8a4f' : c.ink)}
+      </div>
+
+      <div style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', margin: '18px 0 6px', background: c.line }} aria-hidden>
+        <span style={{ width: `${(fuel / total) * 100}%`, background: '#6f8a4f' }} />
+        <span style={{ width: `${(neutral / total) * 100}%`, background: '#d9d2c3' }} />
+        <span style={{ width: `${(drain / total) * 100}%`, background: c.alert }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: c.muted }}>
+        <span>Fuels you {Math.round((fuel / total) * 100)}%</span>
+        <span>Drains you {Math.round((drain / total) * 100)}%</span>
+      </div>
+
+      {worst.length > 0 && (
+        <div style={{ marginTop: 18 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 6px' }}>Biggest drains</p>
+          {worst.map((r) => (
+            <div key={r.task} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 13, padding: '5px 0', borderTop: `0.5px solid ${c.line}` }}>
+              <span>{r.task}</span>
+              <span style={{ whiteSpace: 'nowrap', color: r.action ? c.ink : c.alert }}>{r.action || 'No decision yet'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {best.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 6px' }}>Protect these</p>
+          {best.map((r) => (
+            <div key={r.task} style={{ fontSize: 13, padding: '5px 0', borderTop: `0.5px solid ${c.line}` }}>{r.task}</div>
+          ))}
+        </div>
+      )}
     </figure>
   );
 }

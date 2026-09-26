@@ -5,16 +5,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { exerciseBySlug } from '../exercises';
 import { formatDue, useCoachingSession, type Assignment, type Response } from '../data';
-import type { Answers, Field } from '../types';
-import { IkigaiVisual, WheelVisual } from '../visuals';
+import type { Answers } from '../types';
+import { ExerciseBody } from '../fields';
 import { Loading, Shell, c, s } from '../ui';
-
-function embedUrl(url: string) {
-  if (url.includes('loom.com/share/')) return url.replace('/share/', '/embed/').split('?')[0];
-  const yt = url.match(/(?:youtu\.be\/|v=)([\w-]{11})/);
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
-  return url;
-}
 
 export default function ExercisePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -118,7 +111,6 @@ export default function ExercisePage() {
   if (!profile || !loaded) return <Shell><Loading /></Shell>;
 
   const status = response?.status || 'in_progress';
-  const scaleFields = exercise.sections.flatMap((sec) => sec.fields).filter((f) => f.kind === 'scale');
 
   return (
     <Shell
@@ -152,28 +144,7 @@ export default function ExercisePage() {
         </div>
       )}
 
-      {exercise.intro.map((p, i) => <p key={i} style={s.body}>{p}</p>)}
-
-      {exercise.video && (
-        <div style={{ position: 'relative', paddingTop: '56.25%', margin: '1.5rem 0', background: c.line, borderRadius: 4, overflow: 'hidden' }}>
-          <iframe src={embedUrl(exercise.video)} title={`${exercise.title} walkthrough`} allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
-        </div>
-      )}
-
-      {exercise.sections.map((sec) => (
-        <section key={sec.title} style={{ marginTop: '2.75rem' }}>
-          <h2 style={s.h2}>{sec.title}</h2>
-          {sec.intro && <p style={{ ...s.small, fontSize: 14, margin: '0 0 1rem' }}>{sec.intro}</p>}
-          {sec.fields.map((f) => (
-            <FieldInput key={f.id} field={f} value={answers[f.id]} onChange={(v) => setField(f.id, v)} readOnly={viewingOther} showLabel={sec.fields.length > 1 || f.kind !== 'list'} />
-          ))}
-        </section>
-      ))}
-
-      {exercise.visual === 'ikigai' && <IkigaiVisual answers={answers} />}
-      {exercise.visual === 'wheel' && <WheelVisual answers={answers} fields={scaleFields} />}
-
-      {exercise.closing && <p style={{ ...s.body, marginTop: '2.5rem', fontStyle: 'italic' }}>{exercise.closing}</p>}
+      <ExerciseBody exercise={exercise} answers={answers} onChange={setField} readOnly={viewingOther} />
 
       <hr style={s.rule} />
 
@@ -208,105 +179,3 @@ export default function ExercisePage() {
   );
 }
 
-function FieldInput({ field, value, onChange, readOnly, showLabel }: {
-  field: Field;
-  value: Answers[string] | undefined;
-  onChange: (v: Answers[string]) => void;
-  readOnly: boolean;
-  showLabel: boolean;
-}) {
-  const label = (
-    <label htmlFor={field.id} style={{ display: 'block', fontSize: 15, fontWeight: 500, margin: '0 0 4px' }}>
-      {field.label}
-    </label>
-  );
-  const hint = field.hint ? <p style={{ ...s.small, margin: '0 0 8px' }}>{field.hint}</p> : null;
-  const wrap = { margin: '1.1rem 0' };
-
-  if (field.kind === 'short') {
-    return (
-      <div style={wrap}>
-        {label}{hint}
-        <input id={field.id} value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} readOnly={readOnly} style={s.input} />
-      </div>
-    );
-  }
-
-  if (field.kind === 'long') {
-    return (
-      <div style={wrap}>
-        {label}{hint}
-        <textarea id={field.id} value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} readOnly={readOnly} rows={field.rows || 4} style={{ ...s.input, resize: 'vertical' }} />
-      </div>
-    );
-  }
-
-  if (field.kind === 'list') {
-    const items = Array.isArray(value) ? value : [];
-    const rows = Array.from({ length: Math.max(field.count, items.length) }, (_, i) => items[i] || '');
-    return (
-      <div style={wrap}>
-        {showLabel && label}{hint}
-        <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 6 }}>
-          {rows.map((item, i) => (
-            <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ width: 16, fontSize: 12, color: c.muted, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>
-              <input
-                id={i === 0 ? field.id : undefined}
-                aria-label={`${field.label} ${i + 1}`}
-                value={item}
-                placeholder={i === 0 ? field.placeholder : undefined}
-                readOnly={readOnly}
-                onChange={(e) => {
-                  const next = [...rows];
-                  next[i] = e.target.value;
-                  onChange(next);
-                }}
-                style={s.input}
-              />
-            </li>
-          ))}
-        </ol>
-        {!readOnly && (
-          <button onClick={() => onChange([...rows, ''])} style={{ ...s.ghost, marginTop: 8, marginLeft: 26 }}>+ Add another</button>
-        )}
-      </div>
-    );
-  }
-
-  // scale
-  const n = typeof value === 'number' ? value : 0;
-  return (
-    <div style={wrap} role="group" aria-labelledby={`${field.id}-label`}>
-      <span id={`${field.id}-label`} style={{ display: 'block', fontSize: 15, fontWeight: 500, margin: '0 0 6px' }}>{field.label}</span>
-      {hint}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4 }}>
-        {Array.from({ length: 10 }, (_, i) => i + 1).map((v) => (
-          <button
-            key={v}
-            onClick={() => !readOnly && onChange(v)}
-            aria-pressed={n === v}
-            disabled={readOnly}
-            style={{
-              height: 36,
-              border: `0.5px solid ${n === v ? c.ink : c.line}`,
-              background: n === v ? c.ink : v <= n ? '#efe6d4' : c.paper,
-              color: n === v ? c.bg : c.ink,
-              borderRadius: 3,
-              fontSize: 13,
-              fontFamily: 'inherit',
-              cursor: readOnly ? 'default' : 'pointer',
-              padding: 0,
-            }}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: c.muted, marginTop: 4 }}>
-        <span>{field.low}</span>
-        <span>{field.high}</span>
-      </div>
-    </div>
-  );
-}

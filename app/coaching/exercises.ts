@@ -51,47 +51,71 @@ export const EXERCISES: Exercise[] = [
     phase: 'ground',
     minutes: 45,
     summary: 'Find what fuels you, what drains you, and what you’re tolerating.',
+    visual: 'energy',
     intro: [
-      'I’ve done this every quarter since 2021, and I have every client do it first. Time management is the wrong frame. You can have an empty calendar and still be exhausted. Energy is the real currency.',
+      'I’ve done this every quarter since 2021, and it’s the first thing I have every client do. Time management is the wrong frame. You can have an empty calendar and still be exhausted. Energy is the real currency.',
       'When I ran mine, meditation and surfing were at the top of the list. Managing people directly, vendor calls, and back-to-back meetings were at the bottom, and that’s where most of my week was going.',
-      'Look at your last two weeks of calendar before you start. Be specific. “Meetings” is not an answer. “Weekly vendor check-in with the contractor” is.',
+      'Pull up your last two weeks of calendar. List everything that takes your time, work and life. Rate how each one makes you feel, then make a call on it. Your summary builds itself at the bottom.',
+    ],
+    videos: [
+      { label: 'Part 1: Identify your energy drainers', url: 'https://www.loom.com/share/1b59b3d4267d4d9383e5441a55584219' },
+      { label: 'Part 2: Stop holding yourself back', url: 'https://www.loom.com/share/0288fef3e7c64ae798ba96fbd2c9412c' },
     ],
     sections: [
       {
-        title: 'What gives you energy',
-        intro: 'Work or life. The things you’d do for free, the moments you lose track of time.',
+        title: 'Your week',
+        intro: 'Be specific. “Meetings” is not an answer. “Weekly check-in with the contractor” is. Rate each one from −3 (dread it) to +3 (lights you up).',
         fields: [
-          { kind: 'list', id: 'energizers', label: 'Energizers', count: 6, placeholder: 'e.g. Leading the Thursday breathwork session' },
-        ],
-      },
-      {
-        title: 'What drains you',
-        intro: 'The things you dread, put off, or need a nap after. Add roughly how many hours a week each one takes.',
-        fields: [
-          { kind: 'list', id: 'drains', label: 'Drains', count: 6, placeholder: 'e.g. Chasing invoices — 3 hrs/wk' },
+          {
+            kind: 'table',
+            id: 'tasks',
+            label: 'Tasks and meetings',
+            minRows: 3,
+            addLabel: 'Add a task',
+            columns: [
+              { id: 'task', label: 'Task or meeting', type: 'text', primary: true, placeholder: 'e.g. Weekly check-in with the contractor' },
+              { id: 'hours', label: 'Hours / week', type: 'number', placeholder: '1.5' },
+              { id: 'energy', label: 'Energy', type: 'rating', min: -3, max: 3 },
+              { id: 'action', label: 'Your call', type: 'choice', options: ['Keep doing', 'Do differently', 'Automate', 'Delegate', 'Drop', 'Not sure'] },
+              { id: 'www', label: 'Who, what, by when', type: 'text', placeholder: 'Ask Sam to run it starting Wednesday', showUnless: { column: 'action', values: ['Keep doing'] } },
+            ],
+          },
         ],
       },
       {
         title: 'What you’re tolerating',
-        intro: 'Everything you’ve quietly accepted. The broken process, the relationship you avoid, the belief that you don’t deserve it yet. Tolerations leak energy all day.',
+        intro: 'Everything you’ve quietly accepted, in work and in life. The broken process, the relationship you avoid, the belief that you don’t deserve it yet. Tolerations leak energy all day.',
         fields: [
-          { kind: 'list', id: 'tolerating', label: 'Tolerating', count: 5 },
+          {
+            kind: 'table',
+            id: 'tolerating',
+            label: 'Tolerating',
+            minRows: 2,
+            addLabel: 'Add something you’re tolerating',
+            columns: [
+              { id: 'what', label: 'What you’re tolerating', type: 'text', primary: true, placeholder: 'e.g. Not exercising and feeling sluggish' },
+              { id: 'energy', label: 'How much it costs you', type: 'rating', min: -3, max: -1 },
+              { id: 'action', label: 'Your call', type: 'choice', options: ['Accept it', 'Change it', 'Eliminate it', 'Not sure'] },
+              { id: 'www', label: 'Who, what, by when', type: 'text', placeholder: 'Book a trainer by June 1', showUnless: { column: 'action', values: ['Accept it'] } },
+            ],
+          },
         ],
       },
       {
-        title: 'Decide',
-        intro: 'Every drain gets one of four calls. No drain stays on the list without a decision.',
+        title: 'What you’ll start',
+        intro: 'You just freed up time and energy. Where does it go? This is the fun part.',
         fields: [
-          { kind: 'long', id: 'drop', label: 'Drop it', hint: 'What stops entirely? What happens if nobody does it?', rows: 3 },
-          { kind: 'long', id: 'delegate', label: 'Delegate or automate it', hint: 'Who or what takes it, and by when?', rows: 3 },
-          { kind: 'long', id: 'differently', label: 'Do it differently', hint: 'Same task, less drain. Batch it, shorten it, change where or when you do it.', rows: 3 },
-          { kind: 'long', id: 'accept', label: 'Accept it', hint: 'Some things just come with the job. Name them so they stop surprising you.', rows: 2 },
-        ],
-      },
-      {
-        title: 'Start',
-        fields: [
-          { kind: 'list', id: 'start', label: 'With the time and energy you free up, what do you start doing?', count: 3 },
+          {
+            kind: 'table',
+            id: 'start',
+            label: 'Start',
+            minRows: 2,
+            addLabel: 'Add another',
+            columns: [
+              { id: 'what', label: 'What you’ll start doing', type: 'text', primary: true, placeholder: 'e.g. Surf three mornings a week' },
+              { id: 'www', label: 'First step: who, what, by when', type: 'text' },
+            ],
+          },
         ],
       },
     ],
@@ -334,6 +358,7 @@ export const EXERCISES: Exercise[] = [
       'This worksheet started as how I planned content. It works for anything: a retreat, a program, a product. Build one person in enough detail that you could pick them out of a crowd.',
       'Give them a name. Mine was Jimmy: 35, a burned-out finance guy turned tech sales, living in Lisbon, surfing on weekends, wondering why his peers seem further ahead.',
     ],
+    videos: [{ label: 'How to fill this out', url: 'https://www.loom.com/share/c5c9b9db47a74c11be32101adb653a6c' }],
     sections: [
       {
         title: 'Who they are',
@@ -530,5 +555,135 @@ export const EXERCISES: Exercise[] = [
     ],
   },
 ];
+
+// ─── How-it-works steps and Ben's own completed examples ──────────────────
+// Examples come from Ben's real documents. Names of team members are replaced with roles:
+// the Energy Audit example is also shown on the public lead-magnet page.
+
+const DEFAULT_STEPS = ['Type your answers in your own words. Short is fine.', 'Everything saves as you go. Come back anytime.', 'Stuck? Tap “See Ben’s example” at the top.'];
+
+const EXTRAS: Record<string, Partial<Exercise>> = {
+  'energy-audit': {
+    steps: [
+      'List what takes your time each week. Rough hours are fine.',
+      'Tap a number for how it makes you feel: −3 you dread it, +3 it lights you up.',
+      'Tap what you’ll do about it.',
+      'That’s it. Your summary does the math at the bottom, automatically.',
+    ],
+    example: {
+      note: 'My real audit from mid-2024, while building re:center. Names swapped for roles.',
+      answers: {
+        tasks: [
+          { task: 'Meditation', hours: 4, energy: 3, action: 'Keep doing' },
+          { task: 'Surfing', hours: 4, energy: 2, action: 'Keep doing' },
+          { task: 'Weight training', hours: 3, energy: 2, action: 'Keep doing' },
+          { task: 'Creating content (scripting, shooting, carousels)', hours: 3.5, energy: 2, action: 'Do differently', www: 'Only do the parts only I can do. Build a system for the rest.' },
+          { task: 'Managing my operations lead: calls, feedback, approvals', hours: 5, energy: -2, action: 'Delegate', www: 'Hand to the Chief of Staff. Redefine the role and comp.' },
+          { task: 'Scheduling and misc chats with my assistant', hours: 5, energy: -1, action: 'Delegate', www: 'Chief of Staff owns my calendar.' },
+          { task: 'Managing property staff', hours: 2, energy: -2, action: 'Delegate', www: 'Property manager takes this.' },
+          { task: 'Calls with vendors, influencers, collaborators', hours: 2, energy: -1, action: 'Delegate', www: 'Decide who owns partnerships for re:center.' },
+          { task: 'Misc calls and meetings', hours: 2.5, energy: 0, action: 'Do differently', www: 'Create a “call test” and defend deep-focus time.' },
+          { task: '1:1 executive coaching', hours: 3.5, energy: 0, action: 'Do differently', www: 'Move toward group calls with slides.' },
+          { task: 'Consulting work I’d outgrown', hours: 2, energy: -1, action: 'Drop', www: 'Wrapping up in a few months.' },
+          { task: 'Dog training with the pups', hours: 1.5, energy: 1, action: 'Keep doing' },
+        ],
+        tolerating: [
+          { what: 'Not having an integrator', energy: -3, action: 'Change it', www: 'Hire a Chief of Staff.' },
+          { what: 'Not giving myself enough free time and hermit time', energy: -2, action: 'Change it', www: '48-hour digital detox every two months.' },
+          { what: 'Not knowing what my big offer is', energy: -2, action: 'Not sure' },
+          { what: 'Not surfing enough', energy: -1, action: 'Change it' },
+        ],
+        start: [
+          { what: 'No devices for the first hour after waking', www: 'Movement, stretch, and exercise instead.' },
+          { what: '48-hour digital detox every two months', www: 'Book an Airbnb 20 minutes from home.' },
+        ],
+      },
+    },
+  },
+  ikigai: {
+    visualTop: true,
+    steps: [
+      'Fill in the four lists below. A few words per line is plenty.',
+      'The diagram draws itself as you type. You don’t design anything.',
+      'Look for what shows up in more than one list. That’s the overlap.',
+      'Write your Ikigai in one line. It appears in the center of the diagram.',
+    ],
+    example: {
+      note: 'My real Ikigai. It was a game-changer for clarity on my purpose.',
+      answers: {
+        love: ['Hosting and facilitating', 'Surfing', 'Ice baths and sauna', 'Event production', 'Writing copy and building offers', 'Idea generation'],
+        good: ['Sales and marketing', 'Storytelling', 'Teaching difficult concepts', 'Public speaking', 'Hosting events', 'Shooting content'],
+        need: ['Launching a digital business', 'Building a creator brand', 'Real community', 'Healthier lives', 'More energy', 'More time for fun and nature'],
+        paid: ['Launching companies', 'Going viral', 'Generating leads', 'Big M&A deals', 'Throwing events', 'Building a life in Costa Rica'],
+        statement: 'Hosting and facilitating growth',
+        overlaps: 'Hosting and facilitating. Sales and marketing. Sharing knowledge through coaching, teaching, and content.',
+        shape: 'Retreats, coaching, courses, and membership.',
+      },
+    },
+  },
+  'operating-manual': {
+    steps: [
+      'Answer like you’re onboarding a new teammate.',
+      'Be honest about what drains you. That’s the useful part.',
+      'Share it with your team, your partner, anyone you work closely with.',
+    ],
+    example: {
+      note: 'My real BenOS. I hand this to everyone who works with me.',
+      answers: {
+        mission: 'Building the infrastructure for human wellness integration: the operating system that connects retreat experiences with daily life.',
+        style: 'Visionary. I see trends before they happen. I move fast and think in pictures. Right now I’m still in boutique, micromanaging mode. The goal is monthly strategic reviews while the business runs without me.',
+        strengths: 'Strategic vision and positioning. Revenue through sales and partnerships. Content and viral storytelling (300M+ views). Network access.',
+        growth: 'I get insecure with complex P&Ls. I love clean, visual summaries.',
+        flow: 'Spotting what’s next, telling the story, opening doors.',
+        drains: 'Information overload. Unnecessary complexity. Having to babysit.',
+        comms: 'Best: text, calls, WhatsApp. Avoid long emails and 5+ minute voice memos. Keep it simple.',
+        convince: 'Show me the data visually. Less words, more impact. First principles. Empathy for the hard problems.',
+        boundaries: 'Don’t explain why steel beats aluminum unless I ask. Own your domain completely. Success with me = execute brilliantly while keeping me informed, not involved.',
+      },
+    },
+  },
+  'north-star': {
+    example: {
+      note: 'From my own vision board.',
+      answers: {
+        values: ['Fun Comes First', 'Health over Hustle', 'Conscious Growth', 'Automate, Eliminate, Delegate'],
+        vision: 'Pura vida: work and life in balance',
+        mission: 'Helping conscious entrepreneurs find purpose and overcome burnout through retreats and coaching.',
+        g10: 'Retreat centers in Costa Rica and Joshua Tree',
+        g3: 'A community of 1,000 men doing the work together',
+        g1: 'Monthly strategic reviews while the business runs without me',
+        g90: ['Surf five times a week', 'Hire an executive coach', 'Hire a Chief of Staff'],
+      },
+    },
+  },
+  'audience-avatar': {
+    example: {
+      note: 'My first avatar, Jimmy, from when I was planning content.',
+      answers: {
+        name: 'Jimmy, the burned-out finance guy turned tech sales',
+        basics: '35, Lisbon, married, no kids yet',
+        work: 'Business development, ex-financial analyst. About $140k a year.',
+        week: 'Works about 4 hours a day. Surfs, explores coastal towns, learns Portuguese, takes online courses in sales and marketing.',
+        hobbies: 'Surfing, travel, writing, art, learning to code, YouTube',
+        wants: 'A life with purpose and meaning. Real work/life balance.',
+        struggle: 'Not making as much as his peers. Doesn’t feel financially stable enough to have kids.',
+        stress: 'Flaky, irresponsible people, especially service providers.',
+        values: 'Authenticity, fun, community',
+        status: 'Going OK',
+        communities: 'Twitter, pro surfers on YouTube, the usual self-help world.',
+        media: 'Joe Rogan, Apple News, HBO Max, sales and marketing books',
+        knowledge: 'Interested in learning all of it.',
+        help: 'Become a standout at work, launch a side hustle, build more predictable income.',
+        objection: 'Imposter syndrome and time.',
+        dream: 'I don’t normally leave comments, but your videos got me to finally start my side hustle. Thanks, man.',
+      },
+    },
+  },
+};
+
+for (const ex of EXERCISES) {
+  Object.assign(ex, EXTRAS[ex.slug] || {});
+  if (!ex.steps) ex.steps = DEFAULT_STEPS.filter((st) => ex.example || !st.includes('example'));
+}
 
 export const exerciseBySlug = (slug: string) => EXERCISES.find((e) => e.slug === slug);

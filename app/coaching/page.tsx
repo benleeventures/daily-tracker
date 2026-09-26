@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { EXERCISES, PHASES, WELCOME } from './exercises';
 import { formatDue, loadClientState, statusOf, useCoachingSession, type Assignment, type Response } from './data';
 import { Loading, Shell, StatusDot, c, s } from './ui';
+import { ActionItems, Sessions } from './items';
 
 export default function CoachingHub() {
   const { profile, setProfile, email } = useCoachingSession();
@@ -96,6 +97,17 @@ export default function CoachingHub() {
           </ul>
         </section>
       )}
+
+      <section style={{ margin: '2.5rem 0' }}>
+        <h2 style={s.h2}>Action items</h2>
+        <p style={{ ...s.small, margin: '0 0 0.75rem' }}>What we agreed you’d do. Add your own too.</p>
+        <ActionItems clientId={profile.user_id} />
+      </section>
+
+      <section style={{ margin: '2.5rem 0' }}>
+        <h2 style={s.h2}>Sessions</h2>
+        <Sessions clientId={profile.user_id} canEdit={isCoach} />
+      </section>
 
       <hr style={s.rule} />
 
