@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getLocalDateString } from '@/lib/local-date';
 
@@ -52,7 +52,18 @@ export default function DailyTracker() {
   const [carriedOverTasks, setCarriedOverTasks] = useState<Array<{ id: string; text: string; completed: boolean }>>([]);
   const [showCarriedOver, setShowCarriedOver] = useState(true);
 
-  const loadEntry = useCallback(async (entryDate: string) => {
+  // Sync bookkeeping. Refs, not state, so timers and event listeners always see current values.
+  const dateRef = useRef('');
+  const followTodayRef = useRef(true); // viewing "today" → roll forward when the day changes
+  const dirtyRef = useRef(false); // text edits not yet saved
+  const pendingSavesRef = useRef(0);
+  const lastLocalChangeRef = useRef(0);
+
+  // Don't let a server refresh clobber edits that haven't landed yet.
+  const hasLocalChanges = () =>
+    dirtyRef.current || pendingSavesRef.current > 0 || Date.now() - lastLocalChangeRef.current < 3000;
+
+  const loadEntry = useCallback(async (entryDate: string, opts: { background?: boolean } = {}) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -62,6 +73,7 @@ export default function DailyTracker() {
       }
 
       setIsAuthenticated(true);
+      if (opts.background && hasLocalChanges()) return;
 
       const { data, error } = await supabase
         .from('daily_entries')
@@ -75,6 +87,10 @@ export default function DailyTracker() {
         console.error('Error loading entry:', error);
         return;
       }
+
+      // Bail if the user switched days or started editing while the request was in flight
+      if (entryDate !== dateRef.current) return;
+      if (opts.background && hasLocalChanges()) return;
 
       if (data) {
         setEntryId(data.id);
@@ -94,13 +110,8 @@ export default function DailyTracker() {
         setWrittenToUgmonk(false);
       }
     } catch (e) {
+      // Network blip (common on mobile resume) — keep what's on screen rather than blanking it
       console.error('Error loading entry:', e);
-      setReflection('');
-      setEnergy('');
-      setObservations('');
-      setHabits({});
-      setTasks([]);
-      setWrittenToUgmonk(false);
     }
   }, []);
 
@@ -154,11 +165,10 @@ export default function DailyTracker() {
 
       if (error) {
         console.error('Error loading meetings:', error);
-        setMeetings([]);
         return;
       }
 
-      if (data) {
+      if (data && meetingDate === dateRef.current) {
         setMeetings(data.map(m => ({
           id: m.id,
           person: m.person,
@@ -168,11 +178,16 @@ export default function DailyTracker() {
       }
     } catch (e) {
       console.error('Error loading meetings:', e);
-      setMeetings([]);
     }
   }, []);
 
-  const saveEntryToSupabase = useCallback(async (entryData: any) => {
+  // Upsert on (user_id, date). The old insert-or-update keyed on a local entryId: a device that
+  // opened before today's row existed kept entryId = null forever, so every save it made was an
+  // insert that hit the unique constraint and was silently dropped.
+  const saveEntryToSupabase = useCallback(async (entryData: any, forDate: string = dateRef.current) => {
+    if (!forDate) return;
+    pendingSavesRef.current += 1;
+    lastLocalChangeRef.current = Date.now();
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -180,73 +195,74 @@ export default function DailyTracker() {
         return;
       }
 
-      if (entryId) {
-        // Update existing entry
-        const { error } = await supabase
-          .from('daily_entries')
-          .update({
+      const { data, error } = await supabase
+        .from('daily_entries')
+        .upsert(
+          {
+            user_id: session.user.id,
+            date: forDate,
             ...entryData,
             updated_at: new Date().toISOString(),
-          })
-          .eq('id', entryId)
-          .eq('user_id', session.user.id);
+          },
+          { onConflict: 'user_id,date' }
+        )
+        .select()
+        .single();
 
-        if (error) {
-          console.error('Error updating entry:', error);
-          return;
-        }
-      } else {
-        // Create new entry
-        const { data, error } = await supabase
-          .from('daily_entries')
-          .insert({
-            user_id: session.user.id,
-            date,
-            ...entryData,
-          })
-          .select()
-          .single();
+      if (error) {
+        console.error('Error saving entry:', error);
+        return;
+      }
 
-        if (error) {
-          console.error('Error creating entry:', error);
-          return;
-        }
-
-        if (data) {
-          setEntryId(data.id);
-        }
+      if (data && forDate === dateRef.current) {
+        setEntryId(data.id);
       }
     } catch (e) {
       console.error('Error saving entry to Supabase:', e);
+    } finally {
+      pendingSavesRef.current -= 1;
+      lastLocalChangeRef.current = Date.now();
     }
-  }, [entryId, date]);
+  }, []);
+
+  const showDate = useCallback(async (newDate: string) => {
+    dateRef.current = newDate;
+    followTodayRef.current = newDate === getLocalDateString();
+    dirtyRef.current = false;
+    setDate(newDate);
+    await Promise.all([loadEntry(newDate), loadMeetings(newDate), loadCarriedOverTasks(newDate)]);
+  }, [loadEntry, loadMeetings, loadCarriedOverTasks]);
+
+  // Pull the latest from the server. If the phone was left open overnight, jump to the new today.
+  const refresh = useCallback(async () => {
+    if (!dateRef.current) return;
+    const today = getLocalDateString();
+    if (followTodayRef.current && today !== dateRef.current && !hasLocalChanges()) {
+      await showDate(today);
+      return;
+    }
+    await Promise.all([
+      loadEntry(dateRef.current, { background: true }),
+      loadMeetings(dateRef.current),
+    ]);
+  }, [showDate, loadEntry, loadMeetings]);
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
-      if (session) {
-        const today = getLocalDateString();
-        setDate(today);
-        await loadEntry(today);
-        await loadMeetings(today);
-        await loadCarriedOverTasks(today);
-      }
+      if (session) await showDate(getLocalDateString());
     };
     checkAuth();
 
-    // Set up auth state change listener for cross-device sync
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event);
       setIsAuthenticated(!!session);
-      if (session && event === 'SIGNED_IN') {
-        const today = getLocalDateString();
-        setDate(today);
-        await loadEntry(today);
-        await loadMeetings(today);
-        await loadCarriedOverTasks(today);
+      if (session && event === 'SIGNED_IN' && !dateRef.current) {
+        await showDate(getLocalDateString());
       } else if (!session) {
         setIsAuthenticated(false);
+        dateRef.current = '';
         setEntryId(null);
         setReflection('');
         setEnergy('');
@@ -259,102 +275,57 @@ export default function DailyTracker() {
     });
 
     return () => subscription?.unsubscribe();
-  }, [loadEntry, loadMeetings, loadCarriedOverTasks]);
+  }, [showDate]);
 
-  // Auto-save text fields with debounce
+  // Latest entry state, for saves fired from timers
+  const latestRef = useRef({ reflection, energy, observations, habits, tasks, written_to_ugmonk: writtenToUgmonk });
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (date && (reflection !== '' || observations !== '')) {
-        saveEntryToSupabase({
-          reflection,
-          energy,
-          observations,
-          habits,
-          tasks,
-          written_to_ugmonk: writtenToUgmonk,
-        });
-      }
-    }, 2000); // Save 2 seconds after user stops typing
+    latestRef.current = { reflection, energy, observations, habits, tasks, written_to_ugmonk: writtenToUgmonk };
+  });
 
+  const flushTextEdits = useCallback(async () => {
+    if (!dirtyRef.current) return;
+    dirtyRef.current = false;
+    await saveEntryToSupabase(latestRef.current);
+  }, [saveEntryToSupabase]);
+
+  // Auto-save typed text 1.5s after the last keystroke. Only fires on real edits (dirtyRef),
+  // never on data that just arrived from the server.
+  useEffect(() => {
+    if (!dirtyRef.current) return;
+    const timer = setTimeout(flushTextEdits, 1500);
     return () => clearTimeout(timer);
-  }, [reflection, observations, date, energy, habits, tasks, writtenToUgmonk]);
+  }, [reflection, observations, flushTextEdits]);
 
-  // Periodic polling for cross-device sync (every 5 seconds when authenticated)
+  // Poll while visible. iOS freezes timers in the background, so also refresh on resume:
+  // `focus` alone doesn't fire when reopening a home-screen app, `visibilitychange`/`pageshow` do.
   useEffect(() => {
-    if (!isAuthenticated || !date) return;
+    if (!isAuthenticated) return;
 
-    const pollInterval = setInterval(async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          setIsAuthenticated(false);
-          return;
-        }
+    const poll = setInterval(() => {
+      if (document.visibilityState === 'visible') refresh();
+    }, 5000);
 
-        // Refresh current entry and meetings from server
-        const { data: entryData, error: entryError } = await supabase
-          .from('daily_entries')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .eq('date', date)
-          .single();
-
-        if (!entryError && entryData) {
-          // Only update if data has changed (compare updated_at)
-          if (entryData.updated_at) {
-            // Update from server data
-            setReflection(entryData.reflection || '');
-            setEnergy(entryData.energy || '');
-            setObservations(entryData.observations || '');
-            setHabits(entryData.habits || {});
-            setTasks(entryData.tasks || []);
-            setWrittenToUgmonk(entryData.written_to_ugmonk || false);
-          }
-        }
-
-        // Refresh meetings
-        const { data: meetingsData, error: meetingsError } = await supabase
-          .from('meetings')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .eq('date', date)
-          .order('created_at', { ascending: false });
-
-        if (!meetingsError && meetingsData) {
-          setMeetings(meetingsData.map(m => ({
-            id: m.id,
-            person: m.person,
-            notes: m.notes,
-            granola_link: m.granola_link,
-          })));
-        }
-      } catch (e) {
-        console.error('Polling error:', e);
-      }
-    }, 5000); // Poll every 5 seconds
-
-    return () => clearInterval(pollInterval);
-  }, [isAuthenticated, date]);
-
-  // Refresh data when window regains focus (user switches back from another tab/device)
-  useEffect(() => {
-    const handleFocus = async () => {
-      console.log('Window focused - refreshing data');
-      if (isAuthenticated && date) {
-        await loadEntry(date);
-        await loadMeetings(date);
-      }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh();
+      else flushTextEdits(); // app is being backgrounded — get typing saved first
     };
 
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [isAuthenticated, date, loadEntry, loadMeetings]);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', refresh);
+    window.addEventListener('pageshow', refresh);
+    return () => {
+      clearInterval(poll);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('pageshow', refresh);
+    };
+  }, [isAuthenticated, refresh, flushTextEdits]);
 
   const handleDateChange = async (newDate: string) => {
-    setDate(newDate);
-    await loadEntry(newDate);
-    await loadMeetings(newDate);
-    await loadCarriedOverTasks(newDate);
+    if (!newDate) return;
+    await flushTextEdits();
+    await showDate(newDate);
   };
 
   const goToPreviousDay = async () => {
@@ -787,7 +758,7 @@ export default function DailyTracker() {
           </div>
           <textarea
             value={observations}
-            onChange={(e) => setObservations(e.target.value)}
+            onChange={(e) => { dirtyRef.current = true; setObservations(e.target.value); }}
             placeholder="Observations (optional)"
             style={{ ...styles.textarea, minHeight: '80px' }}
           />
