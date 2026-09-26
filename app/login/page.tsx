@@ -31,7 +31,9 @@ export default function Login() {
           password,
         });
         if (error) throw error;
-        router.push('/');
+        // Only allow same-site paths as the post-login destination
+        const next = new URLSearchParams(window.location.search).get('next');
+        router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dailies');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');

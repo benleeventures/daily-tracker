@@ -13,17 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dailys",
-  description: "Daily reflections, habits, tasks, and meeting notes",
+  title: "Ben Lee",
+  description: "Tools and experiments",
   icons: {
     icon: "/favicon.svg",
     apple: "/apple-touch-icon.svg",
-  },
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Dailys",
   },
   formatDetection: {
     telephone: false,

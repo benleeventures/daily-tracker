@@ -15,5 +15,5 @@ export async function GET(request: NextRequest) {
   }
 
   // URL to redirect to after sign up process completes
-  return NextResponse.redirect(new URL('/', request.url));
+  return NextResponse.redirect(new URL('/dailies', request.url));
 }
