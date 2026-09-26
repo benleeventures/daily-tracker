@@ -9,7 +9,6 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const router = useRouter();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -18,23 +17,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        setError('Check your email to confirm your account');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        // Only allow same-site paths as the post-login destination
-        const next = new URLSearchParams(window.location.search).get('next');
-        router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dailies');
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      // Only allow same-site paths as the post-login destination
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dailies');
     } catch (err: any) {
       setError(err.message || 'An error occurred');
     } finally {
@@ -54,7 +44,7 @@ export default function Login() {
           <span style={styles.brandText}>Dailys</span>
         </div>
 
-        <h1 style={styles.title}>{isSignUp ? 'Create Account' : 'Sign In'}</h1>
+        <h1 style={styles.title}>Sign In</h1>
 
         <form onSubmit={handleAuth} style={styles.form}>
           <input
@@ -77,21 +67,9 @@ export default function Login() {
           {error && <div style={styles.error}>{error}</div>}
 
           <button type="submit" disabled={loading} style={styles.button}>
-            {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            {loading ? 'Loading...' : 'Sign In'}
           </button>
         </form>
-
-        <div style={styles.toggle}>
-          <span style={styles.toggleText}>
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-          </span>
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            style={styles.toggleButton}
-          >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -171,25 +149,6 @@ const styles = {
     border: 'none',
     borderRadius: '6px',
     fontSize: '14px',
-    fontWeight: 500 as const,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  },
-  toggle: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-  },
-  toggleText: {
-    fontSize: '13px',
-    color: '#9ca084',
-  },
-  toggleButton: {
-    background: 'transparent',
-    border: 'none',
-    color: '#c9a876',
-    fontSize: '13px',
     fontWeight: 500 as const,
     cursor: 'pointer',
     fontFamily: 'inherit',

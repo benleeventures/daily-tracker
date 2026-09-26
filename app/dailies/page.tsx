@@ -49,7 +49,9 @@ export default function DailyTracker() {
   const [entryId, setEntryId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [carriedOverTasks, setCarriedOverTasks] = useState<Array<{ id: string; text: string; completed: boolean }>>([]);
+  const [carriedFrom, setCarriedFrom] = useState('');
   const [showCarriedOver, setShowCarriedOver] = useState(true);
+  const [showCheckin, setShowCheckin] = useState(false);
 
   // Sync bookkeeping. Refs, not state, so timers and event listeners always see current values.
   const dateRef = useRef('');
@@ -119,31 +121,27 @@ export default function DailyTracker() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const prevDate = new Date(entryDate + 'T00:00:00');
-      prevDate.setDate(prevDate.getDate() - 1);
-      const prevDateStr = prevDate.toISOString().split('T')[0];
-
+      // Look back past skipped days (up to two weeks) to the last entry that still has open tasks
       const { data, error } = await supabase
         .from('daily_entries')
-        .select('tasks')
+        .select('date, tasks')
         .eq('user_id', session.user.id)
-        .eq('date', prevDateStr)
-        .single();
+        .lt('date', entryDate)
+        .order('date', { ascending: false })
+        .limit(14);
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading previous day tasks:', error);
+      if (error) {
+        console.error('Error loading previous tasks:', error);
         return;
       }
+      if (entryDate !== dateRef.current) return;
 
-      if (data && data.tasks) {
-        const incompleted = (data.tasks as Array<{ id: string; text: string; completed: boolean }>).filter(t => !t.completed);
-        setCarriedOverTasks(incompleted);
-      } else {
-        setCarriedOverTasks([]);
-      }
+      type Task = { id: string; text: string; completed: boolean };
+      const prev = (data || []).find((d) => (d.tasks as Task[] | null)?.some((t) => !t.completed));
+      setCarriedOverTasks(prev ? (prev.tasks as Task[]).filter((t) => !t.completed) : []);
+      setCarriedFrom(prev ? prev.date : '');
     } catch (e) {
       console.error('Error loading carried over tasks:', e);
-      setCarriedOverTasks([]);
     }
   }, []);
 
@@ -298,6 +296,7 @@ export default function DailyTracker() {
       const d = JSON.parse(localStorage.getItem('dailys-drafts') || '{}');
       if (d.newTask) setNewTask(d.newTask);
       if (d.newMeeting) setNewMeeting(d.newMeeting);
+      if (localStorage.getItem('dailys-checkin-open') === '1') setShowCheckin(true);
     } catch {}
     draftsLoadedRef.current = true;
   }, []);
@@ -446,6 +445,40 @@ export default function DailyTracker() {
       tasks: updatedTasks,
       written_to_ugmonk: writtenToUgmonk,
     });
+  };
+
+  const sameTask = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  const pendingCarry = carriedOverTasks.filter((c) => !tasks.some((t) => sameTask(t.text, c.text)));
+
+  const carryAll = () => {
+    const updatedTasks = [
+      ...tasks,
+      ...pendingCarry.map((t) => ({ id: generateTaskId(), text: t.text, completed: false })),
+    ];
+    setTasks(updatedTasks);
+    saveEntryToSupabase({
+      reflection,
+      energy,
+      observations,
+      habits,
+      tasks: updatedTasks,
+      written_to_ugmonk: writtenToUgmonk,
+    });
+  };
+
+  const carriedFromLabel = (() => {
+    if (!carriedFrom || !date) return 'earlier';
+    const d = new Date(date + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    const yesterday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (carriedFrom === yesterday) return 'yesterday';
+    return new Date(carriedFrom + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  })();
+
+  const toggleCheckin = () => {
+    const next = !showCheckin;
+    setShowCheckin(next);
+    try { localStorage.setItem('dailys-checkin-open', next ? '1' : '0'); } catch {}
   };
 
   const toggleTask = async (taskId: string) => {
@@ -757,54 +790,6 @@ export default function DailyTracker() {
           />
         </div>
 
-        {/* Energy & Observations */}
-        <div style={styles.section}>
-          <label style={styles.sectionTitle}>How's your energy?</label>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '16px', fontSize: '32px' }}>
-            {['😤', '😔', '😐', '😊', '🤩'].map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => setEnergyAndSave(emoji)}
-                style={{
-                  background: energy === emoji ? '#c9a876' : 'transparent',
-                  border: energy === emoji ? '2px solid #c9a876' : '2px solid #e8e3db',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  fontSize: '28px',
-                  transition: 'all 0.2s',
-                }}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-          <textarea
-            value={observations}
-            onChange={(e) => { dirtyRef.current = true; setObservations(e.target.value); }}
-            placeholder="Observations (optional)"
-            style={{ ...styles.textarea, minHeight: '80px' }}
-          />
-        </div>
-
-        {/* Habits */}
-        <div style={styles.section}>
-          <label style={styles.sectionTitle}>Habits</label>
-          <div style={styles.checklist}>
-            {FIXED_HABITS.map((habit) => (
-              <label key={habit.id} style={styles.checkboxItem}>
-                <input
-                  type="checkbox"
-                  checked={habits[habit.id] || false}
-                  onChange={() => toggleHabit(habit.id)}
-                  style={styles.checkbox}
-                />
-                <span>{habit.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
         {/* Tasks */}
         <div style={styles.section}>
           <label style={styles.sectionTitle}>Today's tasks</label>
@@ -872,31 +857,18 @@ export default function DailyTracker() {
           </div>
         </div>
 
-        {/* Carried Over Tasks */}
-        {carriedOverTasks.length > 0 && (
+        {/* Carried over: open tasks from the last day you used Dailys, minus ones already on today */}
+        {pendingCarry.length > 0 && (
         <div style={styles.section}>
-          <button
-            onClick={() => setShowCarriedOver(!showCarriedOver)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              fontSize: '11px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              color: '#9ca084',
-              cursor: 'pointer',
-              padding: '0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            {showCarriedOver ? '▼' : '▶'} Carried over from yesterday
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <button onClick={() => setShowCarriedOver(!showCarriedOver)} style={styles.collapseBtn}>
+              {showCarriedOver ? '▼' : '▶'} Still open from {carriedFromLabel} ({pendingCarry.length})
+            </button>
+            <button onClick={carryAll} style={styles.linkBtn}>Bring all forward</button>
+          </div>
           {showCarriedOver && (
             <div style={styles.checklist}>
-              {carriedOverTasks.map((task) => (
+              {pendingCarry.map((task) => (
                 <div key={task.id} style={styles.taskRow}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
                     <input
@@ -904,6 +876,7 @@ export default function DailyTracker() {
                       checked={false}
                       onChange={() => carryOverTask(task)}
                       style={styles.checkbox}
+                      aria-label={`Bring "${task.text}" to today`}
                     />
                     <span style={{ color: '#9ca084', fontSize: '14px', flex: 1 }}>
                       {task.text}
@@ -916,12 +889,72 @@ export default function DailyTracker() {
         </div>
         )}
 
-        {/* Buttons */}
+        {/* Check-in: energy, habits, notes — collapsed so tasks stay front and center */}
+        <div style={styles.section}>
+          <button onClick={toggleCheckin} style={styles.collapseBtn}>
+            {showCheckin ? '▼' : '▶'} Check-in
+            <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>
+              {energy || '—'} · {FIXED_HABITS.filter((h) => habits[h.id]).length}/{FIXED_HABITS.length} habits
+            </span>
+          </button>
+        </div>
+        {showCheckin && (
+        <>
+        {/* Energy & Observations */}
+        <div style={styles.section}>
+          <label style={styles.sectionTitle}>How's your energy?</label>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '16px', fontSize: '32px' }}>
+            {['😤', '😔', '😐', '😊', '🤩'].map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => setEnergyAndSave(emoji)}
+                style={{
+                  background: energy === emoji ? '#c9a876' : 'transparent',
+                  border: energy === emoji ? '2px solid #c9a876' : '2px solid #e8e3db',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  fontSize: '28px',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={observations}
+            onChange={(e) => { dirtyRef.current = true; setObservations(e.target.value); }}
+            placeholder="Observations (optional)"
+            style={{ ...styles.textarea, minHeight: '80px' }}
+          />
+        </div>
+
+        {/* Habits */}
+        <div style={styles.section}>
+          <label style={styles.sectionTitle}>Habits</label>
+          <div style={styles.checklist}>
+            {FIXED_HABITS.map((habit) => (
+              <label key={habit.id} style={styles.checkboxItem}>
+                <input
+                  type="checkbox"
+                  checked={habits[habit.id] || false}
+                  onChange={() => toggleHabit(habit.id)}
+                  style={styles.checkbox}
+                />
+                <span>{habit.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
         <div style={styles.buttonGroup}>
           <button onClick={toggleWrittenToUgmonk} style={{ ...styles.buttonSecondary, opacity: writtenToUgmonk ? 1 : 0.6 }}>
             {writtenToUgmonk ? '✓ Written to Ugmonk' : 'Mark written'}
           </button>
         </div>
+        </>
+        )}
         </>
         )}
 
@@ -1002,6 +1035,32 @@ export default function DailyTracker() {
 }
 
 const styles = {
+  collapseBtn: {
+    background: 'transparent',
+    border: 'none',
+    fontSize: '11px',
+    fontWeight: 600,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.5px',
+    color: '#9ca084',
+    cursor: 'pointer',
+    padding: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontFamily: 'inherit',
+    textAlign: 'left' as const,
+  },
+  linkBtn: {
+    background: 'transparent',
+    border: 'none',
+    fontSize: '12px',
+    color: '#c9a876',
+    cursor: 'pointer',
+    padding: 0,
+    fontFamily: 'inherit',
+    whiteSpace: 'nowrap' as const,
+  },
   container: {
     minHeight: '100vh',
     background: '#faf8f3',
