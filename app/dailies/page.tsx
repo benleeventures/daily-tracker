@@ -91,7 +91,11 @@ export default function DailyTracker() {
 
       setIsAuthenticated(true);
       setIsOwner(session.user.email === OWNER_EMAIL);
-      if (session.user.email !== OWNER_EMAIL) return;
+      // Keep loading real data regardless of owner status — RLS already scopes
+      // this query to the caller's own row. The owner redirect happens at
+      // render time; returning early here left `tasks` un-hydrated for
+      // whoever was logged in, and a later save would push that empty
+      // state back to the database, wiping real data.
       if (opts.background && hasLocalChanges()) return;
 
       const { data, error } = await supabase
