@@ -1075,38 +1075,50 @@ export default function DailyTracker() {
                 <MeetingEditForm key={meeting.id} meeting={meeting} onSave={saveMeetingEdit} onCancel={() => setEditingMeetingId(null)} styles={styles} />
               ) : (
                 <div key={meeting.id} style={styles.meetingItem}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '8px' }}>{meeting.person}</div>
-                    {meeting.notes && <div style={{ fontSize: '13px', color: '#3d3a33', lineHeight: '1.5', whiteSpace: 'pre-wrap', marginBottom: '8px' }}>{meeting.notes}</div>}
-                    {meeting.granola_link && <div style={{ fontSize: '12px', color: '#876a30', marginBottom: '8px' }}><a href={meeting.granola_link} target="_blank" rel="noopener noreferrer" style={{ color: '#876a30', textDecoration: 'none' }}>Granola →</a></div>}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600 }}>{meeting.person}</div>
 
-                    <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', color: '#876a30', marginBottom: '4px' }}>Action items</div>
-                    {meeting.action_items.map((item) => (
-                      <div key={item.id} style={styles.taskRow}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                          <input
-                            type="checkbox"
-                            checked={item.completed}
-                            onChange={() => toggleMeetingActionItem(meeting.id, item.id)}
-                            style={styles.checkbox}
-                          />
-                          <span style={{ fontSize: '13px', textDecoration: item.completed ? 'line-through' : 'none', flex: 1 }}>
-                            {item.text}
-                          </span>
-                        </div>
-                        <button onClick={() => deleteMeetingActionItem(meeting.id, item.id)} style={styles.deleteBtn} aria-label="Delete action item">×</button>
+                    {meeting.notes && (
+                      <div style={{ fontSize: '13px', color: '#3d3a33', lineHeight: '1.6', whiteSpace: 'pre-wrap', border: '0.5px solid #e8e3db', borderRadius: '4px', padding: '10px 12px', background: '#fffdf8' }}>
+                        {meeting.notes}
                       </div>
-                    ))}
-                    <div style={styles.taskInput}>
-                      <input
-                        type="text"
-                        value={meetingActionItemDrafts[meeting.id] || ''}
-                        onChange={(e) => setMeetingActionItemDrafts((prev) => ({ ...prev, [meeting.id]: e.target.value }))}
-                        onKeyDown={(e) => { if (e.key === 'Enter') addMeetingActionItem(meeting.id); }}
-                        placeholder="Add an action item..."
-                        style={{ ...styles.taskField, fontSize: '13px' }}
-                      />
-                      <button onClick={() => addMeetingActionItem(meeting.id)} style={styles.addBtn}>+</button>
+                    )}
+
+                    {meeting.granola_link && (
+                      <div style={{ fontSize: '12px' }}>
+                        <a href={meeting.granola_link} target="_blank" rel="noopener noreferrer" style={{ color: '#876a30', textDecoration: 'none' }}>Granola →</a>
+                      </div>
+                    )}
+
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', color: '#876a30', marginBottom: '6px' }}>Action items</div>
+                      {meeting.action_items.map((item) => (
+                        <div key={item.id} style={styles.taskRow}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                            <input
+                              type="checkbox"
+                              checked={item.completed}
+                              onChange={() => toggleMeetingActionItem(meeting.id, item.id)}
+                              style={styles.checkbox}
+                            />
+                            <span style={{ fontSize: '13px', textDecoration: item.completed ? 'line-through' : 'none', flex: 1 }}>
+                              {item.text}
+                            </span>
+                          </div>
+                          <button onClick={() => deleteMeetingActionItem(meeting.id, item.id)} style={styles.deleteBtn} aria-label="Delete action item">×</button>
+                        </div>
+                      ))}
+                      <div style={styles.taskInput}>
+                        <input
+                          type="text"
+                          value={meetingActionItemDrafts[meeting.id] || ''}
+                          onChange={(e) => setMeetingActionItemDrafts((prev) => ({ ...prev, [meeting.id]: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === 'Enter') addMeetingActionItem(meeting.id); }}
+                          placeholder="Add an action item..."
+                          style={{ ...styles.taskField, fontSize: '13px' }}
+                        />
+                        <button onClick={() => addMeetingActionItem(meeting.id)} style={styles.addBtn}>+</button>
+                      </div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '4px' }}>
@@ -1425,8 +1437,11 @@ const styles = {
   meetingItem: {
     display: 'flex',
     justifyContent: 'space-between',
-    padding: '12px 0',
-    borderBottom: '0.5px solid #e8e3db',
+    gap: '12px',
+    padding: '16px',
+    marginBottom: '12px',
+    border: '0.5px solid #e8e3db',
+    borderRadius: '6px',
   },
   meetingForm: {
     display: 'flex',
