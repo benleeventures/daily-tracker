@@ -11,6 +11,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function DailiesLayout({ children }: LayoutProps<"/dailies">) {
+export default function DailysLayout({ children }: LayoutProps<"/dailies">) {
   return children;
 }

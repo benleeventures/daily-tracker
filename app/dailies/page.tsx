@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { getLocalDateString } from '@/lib/local-date';
+
+const OWNER_EMAIL = 'ben@benlee.ventures';
 
 interface DailyEntry {
   id: string;
@@ -31,6 +34,8 @@ const FIXED_HABITS = [
 ];
 
 export default function DailyTracker() {
+  const router = useRouter();
+  const [isOwner, setIsOwner] = useState<boolean | null>(null);
   const [view, setView] = useState<'daily' | 'meetings'>('daily');
   const [date, setDate] = useState<string>('');
   const [reflection, setReflection] = useState('');
@@ -74,6 +79,8 @@ export default function DailyTracker() {
       }
 
       setIsAuthenticated(true);
+      setIsOwner(session.user.email === OWNER_EMAIL);
+      if (session.user.email !== OWNER_EMAIL) return;
       if (opts.background && hasLocalChanges()) return;
 
       const { data, error } = await supabase
@@ -714,6 +721,17 @@ export default function DailyTracker() {
             <p style={{ color: '#676d55', marginBottom: '2rem' }}>You need to authenticate to use Dailys</p>
             <a href="/login?next=/dailies" style={{ ...styles.buttonPrimary, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>Go to Login</a>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isOwner === false) {
+    router.replace('/coaching');
+    return (
+      <div style={styles.container}>
+        <div style={{ ...styles.content, justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+          <div style={{ textAlign: 'center', color: '#676d55' }}>Redirecting…</div>
         </div>
       </div>
     );
