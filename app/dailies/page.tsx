@@ -715,32 +715,6 @@ export default function DailyTracker() {
     }
   };
 
-  const MeetingEditForm = ({ meeting, onSave, onCancel, styles }: any) => {
-    const [person, setPerson] = useState(meeting.person);
-    const [notes, setNotes] = useState(meeting.notes);
-    const [granola_link, setGranolaLink] = useState(meeting.granola_link || '');
-    const notesRef = useRef<HTMLTextAreaElement>(null);
-
-    useEffect(() => {
-      const el = notesRef.current;
-      if (!el) return;
-      el.style.height = 'auto';
-      el.style.height = `${el.scrollHeight}px`;
-    }, [notes]);
-
-    return (
-      <div style={{ ...styles.meetingForm, border: '0.5px solid #e8e3db', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
-        <input type="text" value={person} onChange={(e) => setPerson(e.target.value)} placeholder="Person/Topic" style={styles.meetingInput} />
-        <textarea ref={notesRef} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes" style={{ ...styles.meetingInput, minHeight: '80px', maxHeight: '400px', overflowY: 'auto', resize: 'none' }} />
-        <input type="text" value={granola_link} onChange={(e) => setGranolaLink(e.target.value)} placeholder="Granola link (optional)" style={styles.meetingInput} />
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => onSave(meeting.id, { person, notes, granola_link })} style={{ ...styles.buttonPrimary, flex: 1 }}>Save</button>
-          <button onClick={onCancel} style={{ ...styles.buttonSecondary, flex: 1 }}>Cancel</button>
-        </div>
-      </div>
-    );
-  };
-
   const setEnergyAndSave = async (emoji: string) => {
     setEnergy(emoji);
     await saveEntryToSupabase({
@@ -1488,3 +1462,44 @@ const styles = {
     fontWeight: 500 as const,
   },
 };
+
+// Defined at module scope, not inside DailyTracker — nesting it there meant every
+// re-render of DailyTracker (the "poll while visible" refresh, any autosave, etc.)
+// gave React a brand-new function reference for this component, so it unmounted and
+// remounted on every parent render, resetting whatever you'd just typed and losing
+// scroll position ("type a character, it jumps back to the top").
+function MeetingEditForm({
+  meeting,
+  onSave,
+  onCancel,
+  styles: formStyles,
+}: {
+  meeting: Meeting;
+  onSave: (meetingId: string, updates: { person: string; notes: string; granola_link: string }) => void;
+  onCancel: () => void;
+  styles: typeof styles;
+}) {
+  const [person, setPerson] = useState(meeting.person);
+  const [notes, setNotes] = useState(meeting.notes);
+  const [granola_link, setGranolaLink] = useState(meeting.granola_link || '');
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = notesRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [notes]);
+
+  return (
+    <div style={{ ...formStyles.meetingForm, border: '0.5px solid #e8e3db', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+      <input type="text" value={person} onChange={(e) => setPerson(e.target.value)} placeholder="Person/Topic" style={formStyles.meetingInput} />
+      <textarea ref={notesRef} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes" style={{ ...formStyles.meetingInput, minHeight: '80px', maxHeight: '400px', overflowY: 'auto', resize: 'none' }} />
+      <input type="text" value={granola_link} onChange={(e) => setGranolaLink(e.target.value)} placeholder="Granola link (optional)" style={formStyles.meetingInput} />
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button onClick={() => onSave(meeting.id, { person, notes, granola_link })} style={{ ...formStyles.buttonPrimary, flex: 1 }}>Save</button>
+        <button onClick={onCancel} style={{ ...formStyles.buttonSecondary, flex: 1 }}>Cancel</button>
+      </div>
+    </div>
+  );
+}
