@@ -75,6 +75,10 @@ export default function DailyTracker() {
   const dirtyRef = useRef(false); // text edits not yet saved
   const pendingSavesRef = useRef(0);
   const lastLocalChangeRef = useRef(0);
+  // The date whose data has actually been confirmed from the server — never the date we're
+  // merely *trying* to show. Saving before this matches guards against every way local state
+  // (tasks, habits, etc.) could still be at its unloaded default and get upserted over real data.
+  const loadedDateRef = useRef<string | null>(null);
 
   // Don't let a server refresh clobber edits that haven't landed yet.
   const hasLocalChanges = () =>
@@ -114,6 +118,9 @@ export default function DailyTracker() {
       // Bail if the user switched days or started editing while the request was in flight
       if (entryDate !== dateRef.current) return;
       if (opts.background && hasLocalChanges()) return;
+
+      // From here on we have an authoritative answer for this date — saves are safe.
+      loadedDateRef.current = entryDate;
 
       if (data) {
         setEntryId(data.id);
@@ -206,6 +213,13 @@ export default function DailyTracker() {
   // insert that hit the unique constraint and was silently dropped.
   const saveEntryToSupabase = useCallback(async (entryData: any, forDate: string = dateRef.current) => {
     if (!forDate) return;
+    // Never persist over data we haven't actually confirmed from the server yet — local
+    // state (tasks, habits, etc.) could still be sitting at its unloaded default, and
+    // upserting that would silently wipe whatever's really in the database.
+    if (loadedDateRef.current !== forDate) {
+      console.error('Refusing to save: entry for', forDate, 'has not finished loading yet');
+      return;
+    }
     pendingSavesRef.current += 1;
     lastLocalChangeRef.current = Date.now();
     setSaveStatus('saving');
