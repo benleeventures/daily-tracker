@@ -57,6 +57,14 @@ export default function DailyTracker() {
   const [carriedFrom, setCarriedFrom] = useState('');
   const [showCarriedOver, setShowCarriedOver] = useState(true);
   const [showCheckin, setShowCheckin] = useState(false);
+  const newMeetingNotesRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = newMeetingNotesRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [newMeeting.notes]);
 
   // Sync bookkeeping. Refs, not state, so timers and event listeners always see current values.
   const dateRef = useRef('');
@@ -630,11 +638,19 @@ export default function DailyTracker() {
     const [person, setPerson] = useState(meeting.person);
     const [notes, setNotes] = useState(meeting.notes);
     const [granola_link, setGranolaLink] = useState(meeting.granola_link || '');
+    const notesRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+      const el = notesRef.current;
+      if (!el) return;
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+    }, [notes]);
 
     return (
       <div style={{ ...styles.meetingForm, border: '0.5px solid #e8e3db', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
         <input type="text" value={person} onChange={(e) => setPerson(e.target.value)} placeholder="Person/Topic" style={styles.meetingInput} />
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes" style={{ ...styles.meetingInput, minHeight: '80px', resize: 'none' }} />
+        <textarea ref={notesRef} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes" style={{ ...styles.meetingInput, minHeight: '80px', maxHeight: '400px', overflowY: 'auto', resize: 'none' }} />
         <input type="text" value={granola_link} onChange={(e) => setGranolaLink(e.target.value)} placeholder="Granola link (optional)" style={styles.meetingInput} />
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => onSave(meeting.id, { person, notes, granola_link })} style={{ ...styles.buttonPrimary, flex: 1 }}>Save</button>
@@ -1022,10 +1038,11 @@ export default function DailyTracker() {
             />
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <textarea
+                ref={newMeetingNotesRef}
                 value={newMeeting.notes}
                 onChange={(e) => setNewMeeting({ ...newMeeting, notes: e.target.value })}
                 placeholder="Notes"
-                style={{ ...styles.meetingInput, minHeight: '80px', resize: 'none', flex: 1 }}
+                style={{ ...styles.meetingInput, minHeight: '80px', maxHeight: '400px', overflowY: 'auto', resize: 'none', flex: 1 }}
               />
               <button
                 onClick={() => setNewMeeting({ ...newMeeting, notes: 'Agenda\n\n* \n\nDiscussion\n\n* \n\nAction Items\n\n* [ ] \n* [ ] ' })}
