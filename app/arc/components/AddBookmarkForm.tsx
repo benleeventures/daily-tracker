@@ -68,6 +68,11 @@ export function AddBookmarkForm({
       return;
     }
 
+    // Commit whatever's still sitting in the tag box — don't silently drop
+    // a tag just because the user didn't click "Add" before submitting.
+    const pendingTag = tagInput.trim();
+    const finalTags = pendingTag && !tags.includes(pendingTag) ? [...tags, pendingTag] : tags;
+
     try {
       setIsSubmitting(true);
 
@@ -75,7 +80,7 @@ export function AddBookmarkForm({
         title: title.trim(),
         url: url.trim(),
         notes: notes.trim(),
-        tags,
+        tags: finalTags,
         category,
         user_id: userId,
       };
