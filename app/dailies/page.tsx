@@ -23,6 +23,7 @@ interface Meeting {
   person: string;
   notes: string;
   granola_link: string;
+  action_items: Array<{ id: string; text: string; completed: boolean }>;
 }
 
 const FIXED_HABITS = [
@@ -43,7 +44,9 @@ export default function DailyTracker() {
   const [tasks, setTasks] = useState<Array<{ id: string; text: string; completed: boolean }>>([]);
   const [newTask, setNewTask] = useState('');
   const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [newMeeting, setNewMeeting] = useState({ person: '', notes: '', granola_link: '' });
+  const [newMeeting, setNewMeeting] = useState<{ person: string; notes: string; granola_link: string; action_items: Array<{ id: string; text: string; completed: boolean }> }>({ person: '', notes: '', granola_link: '', action_items: [] });
+  const [newMeetingActionItemDraft, setNewMeetingActionItemDraft] = useState('');
+  const [meetingActionItemDrafts, setMeetingActionItemDrafts] = useState<{ [meetingId: string]: string }>({});
   const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
   const [energy, setEnergy] = useState<string>('');
   const [observations, setObservations] = useState('');
@@ -186,6 +189,7 @@ export default function DailyTracker() {
           person: m.person,
           notes: m.notes,
           granola_link: m.granola_link,
+          action_items: m.action_items || [],
         })));
       }
     } catch (e) {
@@ -523,7 +527,7 @@ export default function DailyTracker() {
   };
 
   const addMeeting = async () => {
-    if (newMeeting.person.trim() || newMeeting.notes.trim()) {
+    if (newMeeting.person.trim() || newMeeting.notes.trim() || newMeeting.action_items.length > 0) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -539,6 +543,7 @@ export default function DailyTracker() {
             person: newMeeting.person,
             notes: newMeeting.notes,
             granola_link: newMeeting.granola_link,
+            action_items: newMeeting.action_items,
           })
           .select()
           .single();
@@ -556,15 +561,73 @@ export default function DailyTracker() {
               person: data.person,
               notes: data.notes,
               granola_link: data.granola_link,
+              action_items: data.action_items || [],
             },
           ]);
         }
 
-        setNewMeeting({ person: '', notes: '', granola_link: '' });
+        setNewMeeting({ person: '', notes: '', granola_link: '', action_items: [] });
+        setNewMeetingActionItemDraft('');
       } catch (e) {
         console.error('Error adding meeting:', e);
       }
     }
+  };
+
+  const generateActionItemId = () => `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  const addNewMeetingActionItem = () => {
+    if (!newMeetingActionItemDraft.trim()) return;
+    setNewMeeting((prev) => ({
+      ...prev,
+      action_items: [...prev.action_items, { id: generateActionItemId(), text: newMeetingActionItemDraft.trim(), completed: false }],
+    }));
+    setNewMeetingActionItemDraft('');
+  };
+
+  const removeNewMeetingActionItem = (itemId: string) => {
+    setNewMeeting((prev) => ({ ...prev, action_items: prev.action_items.filter((i) => i.id !== itemId) }));
+  };
+
+  const persistMeetingActionItems = async (meetingId: string, actionItems: Meeting['action_items']) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.error('Not authenticated');
+      return;
+    }
+    const { error } = await supabase
+      .from('meetings')
+      .update({ action_items: actionItems, updated_at: new Date().toISOString() })
+      .eq('id', meetingId)
+      .eq('user_id', session.user.id);
+    if (error) console.error('Error saving action items:', error);
+  };
+
+  const toggleMeetingActionItem = async (meetingId: string, itemId: string) => {
+    const meeting = meetings.find((m) => m.id === meetingId);
+    if (!meeting) return;
+    const updatedItems = meeting.action_items.map((i) => (i.id === itemId ? { ...i, completed: !i.completed } : i));
+    setMeetings((prev) => prev.map((m) => (m.id === meetingId ? { ...m, action_items: updatedItems } : m)));
+    await persistMeetingActionItems(meetingId, updatedItems);
+  };
+
+  const addMeetingActionItem = async (meetingId: string) => {
+    const text = (meetingActionItemDrafts[meetingId] || '').trim();
+    if (!text) return;
+    const meeting = meetings.find((m) => m.id === meetingId);
+    if (!meeting) return;
+    const updatedItems = [...meeting.action_items, { id: generateActionItemId(), text, completed: false }];
+    setMeetings((prev) => prev.map((m) => (m.id === meetingId ? { ...m, action_items: updatedItems } : m)));
+    setMeetingActionItemDrafts((prev) => ({ ...prev, [meetingId]: '' }));
+    await persistMeetingActionItems(meetingId, updatedItems);
+  };
+
+  const deleteMeetingActionItem = async (meetingId: string, itemId: string) => {
+    const meeting = meetings.find((m) => m.id === meetingId);
+    if (!meeting) return;
+    const updatedItems = meeting.action_items.filter((i) => i.id !== itemId);
+    setMeetings((prev) => prev.map((m) => (m.id === meetingId ? { ...m, action_items: updatedItems } : m)));
+    await persistMeetingActionItems(meetingId, updatedItems);
   };
 
   const deleteMeeting = async (meetingId: string) => {
@@ -1016,6 +1079,35 @@ export default function DailyTracker() {
                     <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '8px' }}>{meeting.person}</div>
                     {meeting.notes && <div style={{ fontSize: '13px', color: '#3d3a33', lineHeight: '1.5', whiteSpace: 'pre-wrap', marginBottom: '8px' }}>{meeting.notes}</div>}
                     {meeting.granola_link && <div style={{ fontSize: '12px', color: '#876a30', marginBottom: '8px' }}><a href={meeting.granola_link} target="_blank" rel="noopener noreferrer" style={{ color: '#876a30', textDecoration: 'none' }}>Granola →</a></div>}
+
+                    <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', color: '#876a30', marginBottom: '4px' }}>Action items</div>
+                    {meeting.action_items.map((item) => (
+                      <div key={item.id} style={styles.taskRow}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                          <input
+                            type="checkbox"
+                            checked={item.completed}
+                            onChange={() => toggleMeetingActionItem(meeting.id, item.id)}
+                            style={styles.checkbox}
+                          />
+                          <span style={{ fontSize: '13px', textDecoration: item.completed ? 'line-through' : 'none', flex: 1 }}>
+                            {item.text}
+                          </span>
+                        </div>
+                        <button onClick={() => deleteMeetingActionItem(meeting.id, item.id)} style={styles.deleteBtn} aria-label="Delete action item">×</button>
+                      </div>
+                    ))}
+                    <div style={styles.taskInput}>
+                      <input
+                        type="text"
+                        value={meetingActionItemDrafts[meeting.id] || ''}
+                        onChange={(e) => setMeetingActionItemDrafts((prev) => ({ ...prev, [meeting.id]: e.target.value }))}
+                        onKeyDown={(e) => { if (e.key === 'Enter') addMeetingActionItem(meeting.id); }}
+                        placeholder="Add an action item..."
+                        style={{ ...styles.taskField, fontSize: '13px' }}
+                      />
+                      <button onClick={() => addMeetingActionItem(meeting.id)} style={styles.addBtn}>+</button>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: '4px' }}>
                     <button onClick={() => generateShareLink(meeting)} style={{ ...styles.deleteBtn, color: '#876a30', fontSize: '14px' }} title="Share notes">↗</button>
@@ -1045,13 +1137,33 @@ export default function DailyTracker() {
                 style={{ ...styles.meetingInput, minHeight: '80px', maxHeight: '400px', overflowY: 'auto', resize: 'none', flex: 1 }}
               />
               <button
-                onClick={() => setNewMeeting({ ...newMeeting, notes: 'Agenda\n\n* \n\nDiscussion\n\n* \n\nAction Items\n\n* [ ] \n* [ ] ' })}
+                onClick={() => setNewMeeting({ ...newMeeting, notes: 'Agenda\n\n* \n\nDiscussion\n\n* ' })}
                 style={{ ...styles.templateBtn, alignSelf: 'flex-start', marginTop: '2px' }}
                 title="Insert meeting template"
               >
                 Template
               </button>
             </div>
+
+            <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', color: '#876a30' }}>Action items</div>
+            {newMeeting.action_items.map((item) => (
+              <div key={item.id} style={styles.taskRow}>
+                <span style={{ fontSize: '13px', flex: 1 }}>{item.text}</span>
+                <button onClick={() => removeNewMeetingActionItem(item.id)} style={styles.deleteBtn} aria-label="Remove action item">×</button>
+              </div>
+            ))}
+            <div style={styles.taskInput}>
+              <input
+                type="text"
+                value={newMeetingActionItemDraft}
+                onChange={(e) => setNewMeetingActionItemDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addNewMeetingActionItem(); } }}
+                placeholder="Add an action item..."
+                style={{ ...styles.taskField, fontSize: '13px' }}
+              />
+              <button onClick={addNewMeetingActionItem} style={styles.addBtn}>+</button>
+            </div>
+
             <input
               type="text"
               value={newMeeting.granola_link}
