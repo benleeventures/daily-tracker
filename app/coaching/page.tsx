@@ -146,6 +146,11 @@ export default function CoachingHub() {
         );
       })}
 
+      {responses.length > 0 && (
+        <p style={{ marginTop: '2.5rem' }}>
+          <Link href="/coaching/report" style={{ fontSize: 14, color: c.goldDeep }}>Download all your work as a PDF →</Link>
+        </p>
+      )}
       <p style={{ ...s.small, marginTop: '3rem' }}>Signed in as {email}</p>
     </Shell>
   );

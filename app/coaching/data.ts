@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Answers } from './types';
 
-export type Profile = { user_id: string; role: 'client' | 'coach'; name: string; focus: string };
+export type Profile = { user_id: string; role: 'client' | 'coach'; name: string; focus: string; email?: string };
 export type Assignment = { id: string; client_id: string; exercise_slug: string; due_date: string | null; note: string };
 export type Response = {
   client_id: string;

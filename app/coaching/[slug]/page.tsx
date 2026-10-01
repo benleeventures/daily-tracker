@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -50,7 +51,7 @@ export default function ExercisePage() {
   }, [clientId, exercise]);
 
   const save = useCallback(async (next: Answers, status?: Response['status']) => {
-    if (!clientId || !exercise || viewingOther) return;
+    if (!clientId || !exercise) return;
     setSaveState('saving');
     const row: Record<string, unknown> = { client_id: clientId, exercise_slug: exercise.slug, answers: next };
     if (status) {
@@ -70,7 +71,7 @@ export default function ExercisePage() {
     }
     setResponse(data as Response);
     setSaveState('saved');
-  }, [clientId, exercise, viewingOther]);
+  }, [clientId, exercise]);
 
   // Autosave a second after typing stops, and before the tab goes away
   useEffect(() => {
@@ -90,7 +91,6 @@ export default function ExercisePage() {
   }, [save]);
 
   const setField = (id: string, value: Answers[string]) => {
-    if (viewingOther) return;
     dirty.current = true;
     setAnswers((prev) => ({ ...prev, [id]: value }));
   };
@@ -122,8 +122,8 @@ export default function ExercisePage() {
       }
     >
       {viewingOther && (
-        <p style={{ ...s.small, background: c.paper, border: `0.5px solid ${c.line}`, padding: '8px 12px', borderRadius: 4 }}>
-          Viewing {clientName || 'client'}’s answers (read-only).
+        <p style={{ fontSize: 14, background: '#efe6d4', border: `0.5px solid ${c.gold}`, padding: '10px 12px', borderRadius: 4, margin: '0 0 1.25rem' }}>
+          You’re working in <strong>{clientName || 'this client'}’s</strong> account. Everything you type saves to them, not you.
         </p>
       )}
 
@@ -144,12 +144,20 @@ export default function ExercisePage() {
         </div>
       )}
 
-      <ExerciseBody exercise={exercise} answers={answers} onChange={setField} readOnly={viewingOther} />
+      <ExerciseBody exercise={exercise} answers={answers} onChange={setField} />
+
+      {response && (
+        <p className="no-print" style={{ margin: '1.5rem 0 0' }}>
+          <Link href={`/coaching/report?slug=${exercise.slug}${viewingOther ? `&client=${clientId}` : ''}`} style={{ fontSize: 14, color: c.goldDeep }}>
+            Download as PDF →
+          </Link>
+        </p>
+      )}
 
       <hr style={s.rule} />
 
-      {viewingOther ? (
-        <section>
+      {viewingOther && (
+        <section style={{ marginBottom: '2rem' }}>
           <h2 style={s.h2}>Feedback for {clientName || 'client'}</h2>
           {response ? (
             <>
@@ -160,7 +168,8 @@ export default function ExercisePage() {
             <p style={s.small}>They haven’t started this one yet.</p>
           )}
         </section>
-      ) : (
+      )}
+      {(
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           {status === 'submitted' ? (
             <>
@@ -170,7 +179,7 @@ export default function ExercisePage() {
           ) : (
             <>
               <button onClick={() => save(answers, 'submitted')} style={s.button}>Mark as done</button>
-              <span style={s.small}>Ben gets to see your answers either way. This just tells him you’re finished.</span>
+              <span style={s.small}>{viewingOther ? 'Marks it finished on their hub.' : 'Ben gets to see your answers either way. This just tells him you’re finished.'}</span>
             </>
           )}
         </div>

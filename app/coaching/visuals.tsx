@@ -5,7 +5,7 @@ const listOf = (v: Answers[string] | undefined) =>
   Array.isArray(v) ? (v as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim() !== '') : [];
 
 // Four overlapping circles filled from the Ikigai answers; the one-line statement sits in the middle.
-export function IkigaiVisual({ answers }: { answers: Answers }) {
+export function IkigaiVisual({ answers, caption = true }: { answers: Answers; caption?: boolean }) {
   const circles = [
     { id: 'love', label: 'Love', cx: 200, cy: 130 },
     { id: 'good', label: 'Great at', cx: 130, cy: 200 },
@@ -51,9 +51,11 @@ export function IkigaiVisual({ answers }: { answers: Answers }) {
           </div>
         </foreignObject>
       </svg>
-      <figcaption style={{ textAlign: 'center', fontSize: 12, color: c.muted, marginTop: 8 }}>
-        This draws itself as you fill in the four lists. Nothing to design.
-      </figcaption>
+      {caption && (
+        <figcaption style={{ textAlign: 'center', fontSize: 12, color: c.muted, marginTop: 8 }}>
+          This draws itself as you fill in the four lists. Nothing to design.
+        </figcaption>
+      )}
     </figure>
   );
 }

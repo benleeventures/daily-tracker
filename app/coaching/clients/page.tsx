@@ -45,15 +45,10 @@ export default function ClientsPage() {
       <p style={s.eyebrow}>Coach view</p>
       <h1 style={s.h1}>Clients</h1>
 
+      <AddClient onAdded={(id) => { load(); setOpenId(id); }} />
+
       {clients.length === 0 ? (
-        <div style={{ ...s.body, color: c.ink }}>
-          <p style={s.body}>No clients yet. To add one:</p>
-          <ol style={{ paddingLeft: 20, lineHeight: 1.7 }}>
-            <li>Supabase → Authentication → Users → <em>Invite user</em>, enter their email.</li>
-            <li>They click the link in the email and land on <strong>teambenlee.com/coaching</strong>.</li>
-            <li>They show up here the first time they open it. Assign their first exercises.</li>
-          </ol>
-        </div>
+        <p style={s.body}>No clients yet. Add one above.</p>
       ) : (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, borderTop: `0.5px solid ${c.line}` }}>
           {clients.map((cl) => {
@@ -139,6 +134,72 @@ function Leads() {
   );
 }
 
+// Creates the client's account (silently, no email) via the coaching-add-client edge function,
+// so Ben can fill exercises in for them during a session. Sending the sign-in link is a separate step.
+function AddClient({ onAdded }: { onAdded: (userId: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle');
+  const [error, setError] = useState('');
+
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setState('saving');
+    setError('');
+    const { data, error } = await supabase.functions.invoke('coaching-add-client', { body: { name, email } });
+    const message = data?.error || (error ? 'Something went wrong. Try again.' : '');
+    if (message || !data?.user_id) {
+      setState('error');
+      setError(message || 'Something went wrong. Try again.');
+      return;
+    }
+    setState('idle');
+    setName('');
+    setEmail('');
+    setOpen(false);
+    onAdded(data.user_id);
+  };
+
+  if (!open) {
+    return <button onClick={() => setOpen(true)} style={{ ...s.button, marginBottom: '1.75rem' }}>+ Add a client</button>;
+  }
+  return (
+    <form onSubmit={add} style={{ display: 'grid', gap: 8, padding: 14, background: c.paper, border: `0.5px solid ${c.line}`, borderRadius: 6, marginBottom: '1.75rem' }}>
+      <p style={{ ...s.small, color: c.ink, margin: 0 }}>
+        This creates their account. No email goes out yet, so you can fill things in together first. Send them a sign-in link whenever you’re ready.
+      </p>
+      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" aria-label="Client name" required style={s.input} />
+      <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" aria-label="Client email" type="email" required style={s.input} />
+      <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+        <button type="submit" disabled={state === 'saving'} style={s.button}>{state === 'saving' ? 'Adding…' : 'Add client'}</button>
+        <button type="button" onClick={() => setOpen(false)} style={{ ...s.ghost, color: c.muted }}>Cancel</button>
+      </div>
+      {state === 'error' && <p style={{ ...s.small, color: c.alert, margin: 0 }}>{error}</p>}
+    </form>
+  );
+}
+
+// Emails the client a one-tap sign-in link to their hub. Works only for accounts that already exist.
+function SendLink({ email, name }: { email: string; name: string }) {
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const send = async () => {
+    if (!confirm(`Email ${name || email} a sign-in link to their coaching hub?`)) return;
+    setState('sending');
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/coaching` },
+    });
+    setState(error ? 'error' : 'sent');
+  };
+  if (state === 'sent') return <span style={{ fontSize: 13, color: '#5a7340' }}>✓ Sign-in link sent</span>;
+  return (
+    <button onClick={send} disabled={state === 'sending'} style={s.ghost}>
+      {state === 'sending' ? 'Sending…' : state === 'error' ? 'Didn’t send. Try again' : 'Send sign-in link'}
+    </button>
+  );
+}
+
 function ClientDetail({ client, assignments, responses, onChange }: {
   client: Profile;
   assignments: Assignment[];
@@ -170,6 +231,11 @@ function ClientDetail({ client, assignments, responses, onChange }: {
 
   return (
     <div style={{ padding: '0 0 1.5rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 18px', alignItems: 'center', margin: '0 0 1rem', fontSize: 13 }}>
+        {client.email && <span style={{ color: c.muted }}>{client.email}</span>}
+        {client.email && <SendLink email={client.email} name={client.name} />}
+        <Link href={`/coaching/report?client=${client.user_id}`} style={{ color: c.goldDeep }}>PDF report</Link>
+      </div>
       <div style={{ display: 'grid', gap: 8, marginBottom: '1.5rem' }}>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" style={s.input} aria-label="Client name" />
         <textarea value={focus} onChange={(e) => setFocus(e.target.value)} rows={3} placeholder="Their focus right now (shows at the top of their hub)" style={{ ...s.input, resize: 'vertical' }} aria-label="Client focus" />
