@@ -12,6 +12,33 @@ import { Mark, c, font, s } from '../coaching/ui';
 const serif = Playfair_Display({ subsets: ['latin'], weight: ['500', '600'] });
 
 const STORAGE_KEY = 'energy-audit-v1';
+
+// Page-only copy for the public lead magnet. The coaching portal keeps using the exercise text in exercises.ts.
+const COPY = {
+  eyebrow: 'Free · No sign-up · 45 minutes',
+  title: 'Your calendar looks fine. You’re still exhausted.',
+  sub: 'The Energy Audit shows you where it’s all going: what fills you up, what drains you, and what you’ve quietly stopped questioning.',
+  who: 'You already work out. You already meditate. You’re the one everyone leans on. This is the missing piece: finding out which parts of your week are costing you more than they give.',
+  story: [
+    'I’ve done this every quarter since 2021. It’s the first thing I have every client do.',
+    'Time management is the wrong frame. You can have an empty calendar and still be wiped out. Energy is the real currency.',
+    'When I ran mine, meditation and surfing were at the top. Managing people, vendor calls and back-to-back meetings were at the bottom. That’s where most of my week was going.',
+  ],
+  promise: 'You’ll leave with three things: what to keep, what to hand off, and the one thing you’ve been putting up with that’s costing you most.',
+  permission: 'Forty-five minutes, just for you. You don’t need a better reason than being tired.',
+  together: 'Doing this with a partner? Each of you fill in your own, then swap. It’s one of the most honest conversations you’ll have all month.',
+  steps: [
+    'List what takes your time each week. Rough hours are fine.',
+    'Tap −3 if it drains you, +3 if it lights you up.',
+    'Decide: keep it, change it, hand it off or drop it.',
+    'Name what you’re putting up with.',
+    'See your results. The math is done for you.',
+  ],
+  cta: 'Start my audit',
+  ctaNote: 'Your answers stay on this device. Close the tab and come back anytime.',
+  ritual: 'Do this again in three months. I do it every quarter, and it never shows me the same week twice.',
+  footer: 'Go get your energy back.',
+};
 const exercise = exerciseBySlug('energy-audit')!;
 const toolOnly = { ...exercise, intro: [], steps: undefined, videos: undefined };
 
@@ -71,6 +98,7 @@ export default function PublicEnergyAudit() {
 
   const leadForm = (
     <section className="no-print" style={{ marginTop: '2.5rem' }}>
+      <p style={{ ...s.body, fontStyle: 'italic' }}>{COPY.ritual}</p>
       {sendState === 'sent' ? (
         <>
           <h2 style={s.h2}>Got it.</h2>
@@ -128,7 +156,7 @@ export default function PublicEnergyAudit() {
       <style>{`
         @media print { .no-print { display: none !important; } main { padding: 0 !important; } .tool-card { border: 0 !important; box-shadow: none !important; padding: 0 !important; } }
         .ea-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; list-style: none; padding: 0; margin: 0; }
-        @media (max-width: 640px) { .ea-steps { grid-template-columns: 1fr; gap: 8px; } .ea-step { display: flex; align-items: center; gap: 12px; text-align: left !important; } .ea-hero h1 { font-size: 40px !important; } .ea-meta { gap: 14px !important; } }
+        @media (max-width: 640px) { .ea-steps { grid-template-columns: 1fr; gap: 8px; } .ea-step { display: flex; align-items: center; gap: 12px; text-align: left !important; } .ea-hero h1 { font-size: 34px !important; } .ea-meta { gap: 14px !important; } }
         .ea-details > summary { list-style: none; cursor: pointer; }
         .ea-details > summary::-webkit-details-marker { display: none; }
       `}</style>
@@ -142,12 +170,12 @@ export default function PublicEnergyAudit() {
         </header>
 
         <section className="ea-hero" style={{ marginBottom: '2.25rem' }}>
-          <p style={{ ...s.eyebrow, color: c.goldDeep, letterSpacing: '1.4px', marginBottom: 14 }}>A free tool · {exercise.minutes} minutes</p>
-          <h1 className={serif.className} style={{ fontSize: 56, fontWeight: 500, letterSpacing: '-1.5px', lineHeight: 1.04, margin: '0 0 1.1rem' }}>
-            Energy Audit
+          <p style={{ ...s.eyebrow, color: c.goldDeep, letterSpacing: '1.4px', marginBottom: 14 }}>{COPY.eyebrow}</p>
+          <h1 className={serif.className} style={{ fontSize: 46, fontWeight: 500, letterSpacing: '-1.2px', lineHeight: 1.1, margin: '0 0 1.1rem' }}>
+            {COPY.title}
           </h1>
           <p className={serif.className} style={{ fontSize: 22, lineHeight: 1.4, color: c.muted, margin: 0, maxWidth: 560 }}>
-            Find what fuels you, what drains you, and what you’re quietly putting up with.
+            {COPY.sub}
           </p>
           <div className="ea-meta no-print" style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginTop: 22, fontSize: 13, color: c.muted }}>
             {['5 short steps', 'Math done for you', 'Private until you send it'].map((t) => (
@@ -162,19 +190,25 @@ export default function PublicEnergyAudit() {
             className="no-print"
             style={{ display: 'inline-block', marginTop: 24, background: c.ink, color: c.bg, borderRadius: 999, padding: '12px 22px', fontSize: 15, textDecoration: 'none' }}
           >
-            Start the audit ↓
+            {COPY.cta} ↓
           </a>
+          <p className="no-print" style={{ ...s.small, margin: '10px 0 0' }}>{COPY.ctaNote}</p>
         </section>
 
-        <section style={{ borderLeft: `2px solid ${c.gold}`, paddingLeft: 18, margin: '0 0 2rem' }}>
-          <p style={{ ...s.body, fontSize: 17, margin: '0 0 0.9rem' }}>{exercise.intro[0]}</p>
-          <p style={{ ...s.body, margin: 0, color: c.muted }}>{exercise.intro[1]}</p>
+        <p style={{ ...s.body, fontSize: 17, marginBottom: '1.75rem' }}>{COPY.who}</p>
+
+        <section style={{ borderLeft: `2px solid ${c.gold}`, paddingLeft: 18, margin: '0 0 1.75rem' }}>
+          {COPY.story.map((t, i) => (
+            <p key={i} style={{ ...s.body, margin: i === COPY.story.length - 1 ? 0 : '0 0 0.9rem', color: i === 0 ? c.ink : c.muted, fontSize: i === 0 ? 17 : 16 }}>{t}</p>
+          ))}
         </section>
 
-        <p style={{ ...s.body, marginBottom: '1.5rem' }}>{exercise.intro[2]}</p>
+        <p style={{ ...s.body, marginBottom: '0.5rem' }}>{COPY.promise}</p>
+        <p style={{ ...s.body, fontWeight: 600, marginBottom: '0.75rem' }}>{COPY.permission}</p>
+        <p style={{ ...s.body, color: c.muted, marginBottom: '1.5rem' }}>{COPY.together}</p>
 
         <ol className="ea-steps no-print" aria-label="How this works">
-          {exercise.steps?.map((st, i) => (
+          {COPY.steps.map((st, i) => (
             <li key={st} className="ea-step" style={{ background: c.paper, border: `0.5px solid ${c.line}`, borderRadius: 10, padding: '14px 12px', textAlign: 'center' }}>
               <span
                 className={serif.className}
@@ -214,7 +248,7 @@ export default function PublicEnergyAudit() {
         </div>
 
         <p className="no-print" style={{ ...s.small, textAlign: 'center', marginTop: '2.5rem' }}>
-          Built by Ben Lee, founder of <a href="https://www.recenterlife.com" style={{ color: c.goldDeep }}>re:center</a>.
+          {COPY.footer} Built by Ben Lee, founder of <a href="https://www.recenterlife.com" style={{ color: c.goldDeep }}>re:center</a>.
         </p>
       </div>
     </main>
