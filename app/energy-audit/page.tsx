@@ -26,6 +26,7 @@ const COPY = {
   ],
   promise: 'You’ll leave with three things: what to keep, what to hand off, and the one thing you’ve been putting up with that’s costing you most.',
   permission: 'Forty-five minutes. You don’t need a better reason than being tired.',
+  together: 'Doing this with a partner? Each of you fill in your own, then swap. It’s one of the most honest conversations you’ll have all month.',
   steps: [
     'List what takes your time each week. Rough hours are fine.',
     'Tap −3 if it drains you, +3 if it lights you up.',
@@ -203,7 +204,8 @@ export default function PublicEnergyAudit() {
         </section>
 
         <p style={{ ...s.body, marginBottom: '0.5rem' }}>{COPY.promise}</p>
-        <p style={{ ...s.body, fontWeight: 600, marginBottom: '1.5rem' }}>{COPY.permission}</p>
+        <p style={{ ...s.body, fontWeight: 600, marginBottom: '0.75rem' }}>{COPY.permission}</p>
+        <p style={{ ...s.body, color: c.muted, marginBottom: '1.5rem' }}>{COPY.together}</p>
 
         <ol className="ea-steps no-print" aria-label="How this works">
           {COPY.steps.map((st, i) => (
