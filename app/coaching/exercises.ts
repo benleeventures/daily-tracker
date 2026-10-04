@@ -57,6 +57,10 @@ export const EXERCISES: Exercise[] = [
       'When I ran mine, meditation and surfing were at the top of the list. Managing people directly, vendor calls, and back-to-back meetings were at the bottom, and that’s where most of my week was going.',
       'Pull up your last two weeks of calendar. Five short steps, one job each. Your results calculate themselves at the end.',
     ],
+    videos: [
+      { label: 'Watch me do it, part 1 of 2. Older version: I used a spreadsheet, but the steps are the same.', url: 'https://www.loom.com/share/1b59b3d4267d4d9383e5441a55584219' },
+      { label: 'Part 2 of 2. Same older spreadsheet version, same steps.', url: 'https://www.loom.com/share/0288fef3e7c64ae798ba96fbd2c9412c' },
+    ],
     flow: 'energy',
     sections: [
       {
