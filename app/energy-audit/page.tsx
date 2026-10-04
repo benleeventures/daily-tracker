@@ -18,14 +18,14 @@ const COPY = {
   eyebrow: 'Free · No sign-up · 45 minutes',
   title: 'Your calendar looks fine. You’re still exhausted.',
   sub: 'The Energy Audit shows you where it’s all going: what fills you up, what drains you, and what you’ve quietly stopped questioning.',
-  who: 'You already work out. You already meditate. You do the things. This is the missing piece: finding out which parts of your week are costing you more than they give.',
+  who: 'You already work out. You already meditate. You’re the one everyone leans on. This is the missing piece: finding out which parts of your week are costing you more than they give.',
   story: [
     'I’ve done this every quarter since 2021. It’s the first thing I have every client do.',
     'Time management is the wrong frame. You can have an empty calendar and still be wiped out. Energy is the real currency.',
     'When I ran mine, meditation and surfing were at the top. Managing people, vendor calls and back-to-back meetings were at the bottom. That’s where most of my week was going.',
   ],
   promise: 'You’ll leave with three things: what to keep, what to hand off, and the one thing you’ve been putting up with that’s costing you most.',
-  permission: 'Forty-five minutes. You don’t need a better reason than being tired.',
+  permission: 'Forty-five minutes, just for you. You don’t need a better reason than being tired.',
   together: 'Doing this with a partner? Each of you fill in your own, then swap. It’s one of the most honest conversations you’ll have all month.',
   steps: [
     'List what takes your time each week. Rough hours are fine.',
