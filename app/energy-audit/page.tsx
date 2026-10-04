@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Playfair_Display } from 'next/font/google';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { exerciseBySlug } from '../coaching/exercises';
@@ -8,8 +9,15 @@ import { ExerciseBody } from '../coaching/fields';
 import type { Answers } from '../coaching/types';
 import { Mark, c, font, s } from '../coaching/ui';
 
+const serif = Playfair_Display({ subsets: ['latin'], weight: ['500', '600'] });
+
 const STORAGE_KEY = 'energy-audit-v1';
 const exercise = exerciseBySlug('energy-audit')!;
+const toolOnly = { ...exercise, intro: [], steps: undefined, videos: undefined };
+
+function embedUrl(url: string) {
+  return url.includes('loom.com/share/') ? url.replace('/share/', '/embed/').split('?')[0] : url;
+}
 
 // Public lead magnet. Answers live in this browser until the visitor chooses to send them.
 export default function PublicEnergyAudit() {
@@ -116,57 +124,98 @@ export default function PublicEnergyAudit() {
   );
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        background: c.bg,
-        color: c.ink,
-        fontFamily: font,
-        padding: '2rem 1rem 5rem',
-      }}
-    >
-      <style>{`@media print { .no-print { display: none !important; } main { padding: 0 !important; } }`}</style>
-      <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <header
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            marginBottom: '2.5rem',
-          }}
-        >
-          <Link
-            href="/"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
+    <main style={{ minHeight: '100vh', background: c.bg, color: c.ink, fontFamily: font, padding: '1.75rem 1rem 5rem' }}>
+      <style>{`
+        @media print { .no-print { display: none !important; } main { padding: 0 !important; } .tool-card { border: 0 !important; box-shadow: none !important; padding: 0 !important; } }
+        .ea-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; list-style: none; padding: 0; margin: 0; }
+        @media (max-width: 640px) { .ea-steps { grid-template-columns: 1fr; gap: 8px; } .ea-step { display: flex; align-items: center; gap: 12px; text-align: left !important; } .ea-hero h1 { font-size: 40px !important; } .ea-meta { gap: 14px !important; } }
+        .ea-details > summary { list-style: none; cursor: pointer; }
+        .ea-details > summary::-webkit-details-marker { display: none; }
+      `}</style>
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: '3rem' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'inherit', textDecoration: 'none' }}>
             <Mark />
             <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.3px' }}>Ben Lee</span>
           </Link>
-          <span className="no-print" style={{ fontSize: 12, color: c.muted }}>
-            Saves on this device
-          </span>
+          <span className="no-print" style={{ fontSize: 12, color: c.muted }}>Saves on this device</span>
         </header>
 
-        <p style={s.eyebrow}>Free tool · {exercise.minutes} min</p>
-        <h1 style={s.h1}>{exercise.title}</h1>
-
-        {restored && (
-          <p className="no-print" style={{ ...s.small, margin: '0 0 1.25rem' }}>
-            Welcome back. Picking up where you left off.{' '}
-            <button onClick={startOver} style={{ ...s.ghost, fontSize: 13 }}>
-              Start over
-            </button>
+        <section className="ea-hero" style={{ marginBottom: '2.25rem' }}>
+          <p style={{ ...s.eyebrow, color: c.goldDeep, letterSpacing: '1.4px', marginBottom: 14 }}>A free tool · {exercise.minutes} minutes</p>
+          <h1 className={serif.className} style={{ fontSize: 56, fontWeight: 500, letterSpacing: '-1.5px', lineHeight: 1.04, margin: '0 0 1.1rem' }}>
+            Energy Audit
+          </h1>
+          <p className={serif.className} style={{ fontSize: 22, lineHeight: 1.4, color: c.muted, margin: 0, maxWidth: 560 }}>
+            Find what fuels you, what drains you, and what you’re quietly putting up with.
           </p>
+          <div className="ea-meta no-print" style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginTop: 22, fontSize: 13, color: c.muted }}>
+            {['5 short steps', 'Math done for you', 'Private until you send it'].map((t) => (
+              <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: 99, background: c.gold }} />
+                {t}
+              </span>
+            ))}
+          </div>
+          <a
+            href="#start"
+            className="no-print"
+            style={{ display: 'inline-block', marginTop: 24, background: c.ink, color: c.bg, borderRadius: 999, padding: '12px 22px', fontSize: 15, textDecoration: 'none' }}
+          >
+            Start the audit ↓
+          </a>
+        </section>
+
+        <section style={{ borderLeft: `2px solid ${c.gold}`, paddingLeft: 18, margin: '0 0 2rem' }}>
+          <p style={{ ...s.body, fontSize: 17, margin: '0 0 0.9rem' }}>{exercise.intro[0]}</p>
+          <p style={{ ...s.body, margin: 0, color: c.muted }}>{exercise.intro[1]}</p>
+        </section>
+
+        <p style={{ ...s.body, marginBottom: '1.5rem' }}>{exercise.intro[2]}</p>
+
+        <ol className="ea-steps no-print" aria-label="How this works">
+          {exercise.steps?.map((st, i) => (
+            <li key={st} className="ea-step" style={{ background: c.paper, border: `0.5px solid ${c.line}`, borderRadius: 10, padding: '14px 12px', textAlign: 'center' }}>
+              <span
+                className={serif.className}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 99, border: `1px solid ${c.gold}`, color: c.goldDeep, fontSize: 14, flexShrink: 0, marginBottom: 8 }}
+              >
+                {i + 1}
+              </span>
+              <span style={{ display: 'block', fontSize: 13, lineHeight: 1.4, color: c.ink }}>{st}</span>
+            </li>
+          ))}
+        </ol>
+
+        {exercise.videos && (
+          <details className="ea-details no-print" style={{ margin: '1.5rem 0 0.5rem' }}>
+            <summary style={{ fontSize: 14, color: c.goldDeep }}>▸ Watch me do it first (older spreadsheet version, same steps)</summary>
+            <div style={{ display: 'grid', gap: 14, marginTop: 12 }}>
+              {exercise.videos.map((v) => (
+                <figure key={v.url} style={{ margin: 0 }}>
+                  <div style={{ position: 'relative', paddingTop: '56.25%', background: c.line, borderRadius: 10, overflow: 'hidden' }}>
+                    <iframe src={embedUrl(v.url)} title={v.label} allowFullScreen loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+                  </div>
+                  <figcaption style={{ ...s.small, marginTop: 6 }}>{v.label}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </details>
         )}
 
-        <ExerciseBody exercise={exercise} answers={answers} onChange={(id, v) => setAnswers((prev) => ({ ...prev, [id]: v }))} resultsExtra={leadForm} />
+        <div id="start" className="tool-card" style={{ scrollMarginTop: 16, marginTop: '2.25rem', background: c.paper, border: `0.5px solid ${c.line}`, borderRadius: 16, padding: '4px 20px 24px', boxShadow: '0 1px 2px rgba(61,58,51,0.04), 0 12px 32px -16px rgba(61,58,51,0.12)' }}>
+          {restored && (
+            <p className="no-print" style={{ ...s.small, margin: '16px 0 0' }}>
+              Welcome back. Picking up where you left off.{' '}
+              <button onClick={startOver} style={{ ...s.ghost, fontSize: 13 }}>Start over</button>
+            </p>
+          )}
+          <ExerciseBody exercise={toolOnly} answers={answers} onChange={(id, v) => setAnswers((prev) => ({ ...prev, [id]: v }))} resultsExtra={leadForm} />
+        </div>
+
+        <p className="no-print" style={{ ...s.small, textAlign: 'center', marginTop: '2.5rem' }}>
+          Built by Ben Lee, founder of <a href="https://www.recenterlife.com" style={{ color: c.goldDeep }}>re:center</a>.
+        </p>
       </div>
     </main>
   );
