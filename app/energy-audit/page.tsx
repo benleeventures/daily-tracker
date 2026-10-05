@@ -24,6 +24,11 @@ const COPY = {
     'Time management is the wrong frame. You can have an empty calendar and still be wiped out. Energy is the real currency.',
     'When I ran mine, meditation and surfing were at the top. Managing people, vendor calls and back-to-back meetings were at the bottom. That’s where most of my week was going.',
   ],
+  story2: [
+    'I learned this after I burned out and had to rehab from my last business. It became part of my quarterly ritual, and I’ve never looked back.',
+    'I’ve walked hundreds of founders through it. My whole leadership team does it. It’s changed my life, and a lot of other people’s.',
+    'It’s completely free. Questions? Use the note box at the end, and I’ll help.',
+  ],
   promise: 'You’ll leave with three things: what to keep, what to hand off, and the one thing you’ve been putting up with that’s costing you most.',
   permission: 'Forty-five minutes, just for you. You don’t need a better reason than being tired.',
   together: 'Doing this with a partner? Each of you fill in your own, then swap. It’s one of the most honest conversations you’ll have all month.',
@@ -202,6 +207,10 @@ export default function PublicEnergyAudit() {
             <p key={i} style={{ ...s.body, margin: i === COPY.story.length - 1 ? 0 : '0 0 0.9rem', color: i === 0 ? c.ink : c.muted, fontSize: i === 0 ? 17 : 16 }}>{t}</p>
           ))}
         </section>
+
+        {COPY.story2.map((t, i) => (
+          <p key={i} style={{ ...s.body, marginBottom: '0.9rem' }}>{t}</p>
+        ))}
 
         <p style={{ ...s.body, marginBottom: '0.5rem' }}>{COPY.promise}</p>
         <p style={{ ...s.body, fontWeight: 600, marginBottom: '0.75rem' }}>{COPY.permission}</p>
