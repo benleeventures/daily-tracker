@@ -168,6 +168,19 @@ a { color: inherit; }
 .cutline i { font-family: var(--serif); font-style: italic; font-weight: 300; color: var(--accent); font-size: 1.4rem; }
 .cutline span { flex-basis: 100%; font-size: 0.98rem; color: var(--on-green-2); }
 
+
+.numswrap { display: flex; flex-direction: column; gap: 20px; }
+.nums-label { color: var(--accent); }
+.numswrap .nums { border-top: 1px solid var(--green-line); }
+.cutline { gap: 8px 36px; align-items: flex-start; }
+.cutline div { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.cutline small { font-size: 0.9rem; color: var(--on-green-2); }
+@media (max-width: 860px) {
+  .cutline { flex-direction: column; gap: 6px; }
+  .cutline b { font-size: 2.4rem; }
+  .mosaic figcaption, .audit figure figcaption, .close figure figcaption { font-size: 0.56rem; letter-spacing: 0.12em; left: 10px; bottom: 8px; right: 10px; }
+}
+
 /* stage */
 .stage { margin: 0; display: flex; flex-direction: column; gap: 18px; }
 .stage .photo { aspect-ratio: 21 / 9; overflow: hidden; max-width: 100%; }
@@ -280,7 +293,7 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
       <div class="copy">
         <span class="label">Run Like re<span class="colon">:</span>center</span>
         <h1>You got into this to <em>serve people.</em></h1>
-        <p class="lede tone">Then the software, the staff, the inbox and the booking sites showed up. <span class="key">I help hotel and retreat operators cut the noise, fix how guests find and book them, and get back on the floor.</span></p>
+        <p class="lede tone">Then the software, the OTAs, and the never-ending backlog took over. <span class="key">I help hotel and retreat operators get reservations coming in 8 to 12 months out, so you can be out on the floor with your guests instead of shaking trees 20 days before.</span></p>
         <div class="cta-row">
           <a class="btn" href="#book">Book a Pipe Audit</a>
           <a class="btn ghost" href="#audit">What it covers</a>
@@ -288,11 +301,14 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
       </div>
       <figure><img src="/newsitev1/img/portrait.jpg" alt="Portrait of Ben Lee smiling, outdoors in warm light"></figure>
     </div>
-    <div class="nums" aria-label="re:center by the numbers">
-      <div class="num"><b>700M+</b><span>Views across platforms</span></div>
-      <div class="num"><b>$1M+</b><span>Retreat pipeline</span></div>
-      <div class="num"><b>90%</b><span>Direct bookings</span></div>
-      <div class="num"><b>$0</b><span>Paid ads, outside funding</span></div>
+    <div class="numswrap">
+      <span class="label nums-label">At re:center</span>
+      <div class="nums" aria-label="re:center by the numbers">
+        <div class="num"><b>8-12</b><span>Months out we take reservations</span></div>
+        <div class="num"><b>90%</b><span>Direct bookings</span></div>
+        <div class="num"><b>$1M+</b><span>Retreat pipeline</span></div>
+        <div class="num"><b>$0</b><span>Paid ads, outside funding</span></div>
+      </div>
     </div>
     <div class="press" aria-label="Featured in">
       <span class="label" style="color:var(--on-green-2)">Recognized worldwide</span>
@@ -311,11 +327,11 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
   <section class="story">
     <figure><img src="/newsitev1/img/ben-table.jpg" alt="Ben Lee in conversation across a wooden table, with a notebook and a mug"></figure>
     <div class="text">
-      <span class="label">The part nobody tells you</span>
-      <h2>Then you found out you hadn't finished <em>your own work.</em></h2>
-      <p class="tone"><span class="key">If you're running on empty, guests feel it. So you wear the mask, even when you're stressed.</span> Reviews, repeat visits, word of mouth: all of it rides on you.</p>
-      <p class="tone">Nobody tells you that when you buy the land or take over the old hotel. <span class="key">Org charts. Housekeeping standards. A booking engine, a reservation platform, a WhatsApp line, an SMS line, an iMessage line.</span> There's always another project, and you never feel ahead.</p>
-      <p class="pull">You thought if you build the temple, they will come. They don't. You need attention.</p>
+      <span class="label">What nobody tells you</span>
+      <h2>Everything rides on <em>you.</em></h2>
+      <p class="tone"><span class="key">Everything rides on you, from the credit cards and the loans to the investors, your staff, and whoever called in sick this morning.</span> Nobody tells you that when you buy the land or take over a business, and there's really no community to lean on either. On top of that you're learning org charts, housekeeping standards, which booking engine to use, which tools to trust, the WhatsApp line, the iMessage line, all of it.</p>
+      <p class="pull">If you build the temple, they will come. They don't.</p>
+      <p class="tone">So about 20 days out you turn on Facebook and Google, hire a Booking.com consultant, and <span class="key">start pulling levers to shake some trees.</span> How do I know this? I've been there. I built re<span class="colon">:</span>center from scratch without ever building anything, managing a construction budget, or running a hotel.</p>
       <p class="sign">I can help.</p>
     </div>
   </section>
@@ -344,10 +360,12 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
       <div class="copy">
         <img class="rclogo" src="/newsitev1/brand/recenter-logo-negative.svg" alt="re:center">
         <span class="label">The proof is the lodge</span>
-        <h2>Run like re<span class="colon">:</span>center.</h2>
-        <p class="tone">re:center is a 7-key lodge in Santa Teresa, Costa Rica, and the first nervous system regulation lodge of its kind. It is recognized around the world. <span class="key">A small team, no outside investors, and a seven-figure retreat pipeline built without a dollar of paid ads.</span></p>
-        <div class="cutline" role="img" aria-label="Software bill cut from $3,000 to $1,100 a month, with $0 in outside funding">
-          <b>$3,000</b><i aria-hidden="true">to</i><b>$1,100</b><span>a month in software. 63% less, with $0 in outside funding.</span>
+        <h2 style="font-size: clamp(2.1rem, 4.4vw, 3.5rem)">At re<span class="colon">:</span>center we take reservations <em>8 to 12 months out,</em> with no paid ads and no investors.</h2>
+        <p class="tone"><span class="key">We run a small team, 90% of our bookings come in direct, and we've built a seven-figure retreat pipeline.</span> re<span class="colon">:</span>center is the first nervous system regulation lodge of its kind, and it's recognized around the world.</p>
+        <div class="cutline" role="img" aria-label="Software bill cut from $3,000 to $900 a month, self-funded">
+          <div><b>$3,000</b><small>a month before</small></div>
+          <div><b>$900</b><small>a month now</small></div>
+          <span>70% less in software, all self-funded. Nobody on the cap table.</span>
         </div>
         <ul class="facts">
           <li><span>Direct bookings</span><span>25% to 90% in under two years</span></li>
@@ -355,8 +373,8 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
         </ul>
       </div>
       <div class="mosaic">
-        <figure class="a"><img src="/newsitev1/img/aframe-dog.jpg" alt="Looking down from an A-frame loft through tall windows at a man and a dog on a jungle deck"><figcaption>The A-frame, re:center, Santa Teresa, Costa Rica</figcaption></figure>
-        <figure><img src="/newsitev1/img/pool-guests.jpg" alt="Guests lounging around a small pool under a shade sail"><figcaption>The pool, re:center, Costa Rica</figcaption></figure>
+        <figure class="a"><img src="/newsitev1/img/aframe-dog.jpg" alt="Looking down from an A-frame loft through tall windows at a man and a dog on a jungle deck"><figcaption>re:center, Costa Rica</figcaption></figure>
+        <figure><img src="/newsitev1/img/pool-guests.jpg" alt="Guests lounging around a small pool under a shade sail"><figcaption>re:center, Costa Rica</figcaption></figure>
       </div>
     </div>
   </section>
@@ -366,8 +384,8 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
     <div class="text">
       <span class="label">Who's talking</span>
       <h2>Hey, I'm <em>Ben Lee.</em></h2>
-      <p class="tone">I spent almost 20 years in software and agencies. <span class="key">I ran sales and marketing while our agency grew from $6M to $20M in three years, with clients like Google, TikTok and MasterClass.</span> Then I burned out.</p>
-      <p class="tone"><span class="key">So I built hospitality with zero experience instead.</span> I learned it from the ground up and built re<span class="colon">:</span>center, the first nervous system regulation lodge of its kind. After 20 years in technology, <span class="key">I think productization is the secret.</span> It is how I built re<span class="colon">:</span>center: I productized the business from the ground up and wove tech into the guest experience at every touchpoint.</p>
+      <p class="tone">In 2008 I dropped out of college and opened Kitchen 24, Hollywood's first 24-hour diner, which did $2.5 million in its first year. After that I built Rootstrap, an agency that grew to $25 million at its peak, and later I became the first-ever CMO at Formula.Monks, managing a $200 million book of business. <span class="key">Then I built re<span class="colon">:</span>center from scratch, having never run a hotel.</span> You have to be a little crazy to start something like this, and I think that's the good kind of crazy.</p>
+      <p class="tone">After 20 years in technology, <span class="key">I think productization is the secret.</span> That's how I built re<span class="colon">:</span>center: I productized the business from the ground up and built tech into every guest touchpoint. Content is how it fills.</p>
       <div class="team">
         <div class="person">
           <span class="label">Runs the build with you</span>
@@ -431,7 +449,7 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
   </section>
 
   <section class="audit bleed" id="audit" style="padding-inline:0">
-    <figure><img src="/newsitev1/img/audit-laptop.jpg" alt="Two people working through a laptop at a table on a jungle terrace"><figcaption>The terrace at re:center, Santa Teresa, Costa Rica</figcaption></figure>
+    <figure><img src="/newsitev1/img/audit-laptop.jpg" alt="Two people working through a laptop at a table on a jungle terrace"><figcaption>re:center, Costa Rica</figcaption></figure>
     <div class="copy">
       <span class="label">Where we start</span>
       <h2>Everything starts with a <em>Pipe Audit.</em></h2>
@@ -441,6 +459,7 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
         <li>Your staff and resourcing, mapped to the work</li>
         <li>Where guests drop out between first look and booking</li>
         <li>The first three fixes, in order of money</li>
+        <li>A 12-month plan to get reservations coming in 8 to 12 months out</li>
       </ul>
       <p class="tone">AI helps with the repetitive work: replies, quotes, follow-up. You get back on the floor with your guests. <span class="key">The live experience stays yours.</span></p>
     </div>
@@ -453,17 +472,17 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
     </div>
     <div>
       <div class="row">
-        <div><h3>Pipe Audit</h3><p>One week. Credited in full toward the Rewire if you start within 30 days.</p></div>
+        <div><h3>Pipe Audit</h3><p>One week. We go through your tools, your team, and where bookings slip away, and you walk out with a cancel list, your first three fixes, and a 12-month plan. Credited in full toward the Rewire if you start within 30 days.</p></div>
         <div class="price">$4,500</div>
         <a class="btn" href="#book">Book the audit</a>
       </div>
       <div class="row">
-        <div><h3>Rewire</h3><p>About 30 days. We fix the biggest leaks with your team and leave you a written playbook.</p></div>
+        <div><h3>Rewire</h3><p>About 30 days. We fix the leaks and set up the booking and follow-up flow that keeps the calendar full, working alongside your team, and leave you a written playbook.</p></div>
         <div class="price">$15,000</div>
         <a class="btn ghost" href="#book">Ask about it</a>
       </div>
       <div class="row">
-        <div><h3>Full Stack</h3><p>About 60 days. Booking, onboarding, check-in and in-stay flows, plus the content system that fills our retreats without paid ads.</p></div>
+        <div><h3>Full Stack</h3><p>About 60 days. Everything above, plus the content system that fills the calendar without paid ads, and booking, onboarding, check-in and in-stay flows branded as you.</p></div>
         <div class="price">$30,000</div>
         <a class="btn ghost" href="#book">Ask about it</a>
       </div>
@@ -483,7 +502,7 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
       <span class="note">Or write to <span class="addr">ben@benlee.ventures</span>. I read every one.</span>
       <span class="note ps"><b>P.S.</b> The $4,500 audit fee is credited in full if you move to the Rewire within 30 days.</span>
     </div>
-    <figure><img src="/newsitev1/img/pool-aerial.jpg" alt="A blue plunge pool seen from above, surrounded by jungle, decking and a shade sail"><figcaption>The pool at re:center, Santa Teresa, Costa Rica</figcaption></figure>
+    <figure><img src="/newsitev1/img/pool-aerial.jpg" alt="A blue plunge pool seen from above, surrounded by jungle, decking and a shade sail"><figcaption>re:center, Costa Rica</figcaption></figure>
   </section>
 
   <footer>
