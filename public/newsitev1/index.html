@@ -187,6 +187,12 @@ a { color: inherit; }
 .closed span { color: var(--accent); }
 .proofimg { display: flex; flex-direction: column; gap: 16px; }
 .proofimg img { height: auto; }
+.vsl { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.vsl-box { width: 100%; max-width: 860px; aspect-ratio: 16 / 9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: var(--green-2, #1d261a); border: 1px solid var(--green-line); border-radius: 4px; color: var(--tan); }
+.vsl-note { margin: 0; font-size: 0.9rem; letter-spacing: 0.04em; color: var(--on-green-2); }
+.vsl-steps { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; font-size: 0.98rem; color: var(--on-green-2); text-align: center; }
+.vsl-steps a { color: var(--on-green); text-decoration: underline; text-underline-offset: 3px; }
+.vsl-steps .step { font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tan); border: 1px solid var(--green-line); border-radius: 99px; padding: 5px 12px; }
 /* stage */
 .stage { margin: 0; display: flex; flex-direction: column; gap: 18px; }
 .stage .photo { aspect-ratio: 21 / 9; overflow: hidden; max-width: 100%; }
@@ -308,7 +314,15 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
     </div>
     <div class="numswrap">
       <span class="label nums-label">At re:center</span>
-      <div class="nums" aria-label="re:center by the numbers">
+      <div class="vsl" id="video">
+      <div class="vsl-steps"><span class="step">Step 1</span><span>Watch this first. Three minutes on who the audit is for and what it costs.</span></div>
+      <div class="vsl-box" role="img" aria-label="Video placeholder, Ben's intro video goes here">
+        <svg viewBox="0 0 72 72" width="72" height="72" aria-hidden="true"><circle cx="36" cy="36" r="34" fill="none" stroke="currentColor" stroke-width="2"/><path d="M29 22 L52 36 L29 50 Z" fill="currentColor"/></svg>
+        <p class="vsl-note">Video goes here. Lorem ipsum, shooting tomorrow.</p>
+      </div>
+      <div class="vsl-steps"><span class="step">Step 2</span><span>Then <a href="#book">book your Pipe Audit</a>.</span></div>
+    </div>
+    <div class="nums" aria-label="re:center by the numbers">
         <div class="num"><b>8-12</b><span>Months out we take reservations</span></div>
         <div class="num"><b>90%</b><span>Direct bookings</span></div>
         <div class="num"><b>$1M+</b><span>Retreat pipeline</span></div>
@@ -378,7 +392,7 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
         </ul>
       </div>
       <div class="mosaic">
-        <figure class="a"><img src="/newsitev1/img/aframe-dog.jpg" alt="Looking down from an A-frame loft through tall windows at a man and a dog on a jungle deck"><figcaption>Signature A-frame, re:center Recovery Day</figcaption></figure>
+        <figure class="a"><img src="/newsitev1/img/aframe-dog.jpg" alt="Looking down from an A-frame loft through tall windows at a man and a dog on a jungle deck"><figcaption>Signature A-frame, re:center</figcaption></figure>
         <figure><img src="/newsitev1/img/pool-guests.jpg" alt="Guests lounging around a small pool under a shade sail"><figcaption>Recovery Day at re:center</figcaption></figure>
       </div>
     </div>
