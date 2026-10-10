@@ -187,6 +187,12 @@ a { color: inherit; }
 .closed span { color: var(--accent); }
 .proofimg { display: flex; flex-direction: column; gap: 16px; }
 .proofimg img { height: auto; }
+.vsl { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.vsl-box { width: 100%; max-width: 860px; aspect-ratio: 16 / 9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: var(--green-2, #1d261a); border: 1px solid var(--green-line); border-radius: 4px; color: var(--tan); }
+.vsl-note { margin: 0; font-size: 0.9rem; letter-spacing: 0.04em; color: var(--on-green-2); }
+.vsl-steps { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; font-size: 0.98rem; color: var(--on-green-2); text-align: center; }
+.vsl-steps a { color: var(--on-green); text-decoration: underline; text-underline-offset: 3px; }
+.vsl-steps .step { font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tan); border: 1px solid var(--green-line); border-radius: 99px; padding: 5px 12px; }
 /* stage */
 .stage { margin: 0; display: flex; flex-direction: column; gap: 18px; }
 .stage .photo { aspect-ratio: 21 / 9; overflow: hidden; max-width: 100%; }
@@ -298,7 +304,7 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
       <div class="copy">
         <span class="label">Run Like re<span class="colon">:</span>center</span>
         <h1>You got into this to <em>serve people.</em></h1>
-        <p class="lede tone">Then the software, the OTAs, and the never-ending backlog took over. <span class="key">I help hotel and retreat operators get reservations coming in 8 to 12 months out, so you can be out on the floor with your guests instead of shaking trees 20 days before.</span></p>
+        <p class="lede tone">Then the OTAs and the never-ending backlog took over. I built re<span class="colon">:</span>center in Costa Rica to take reservations 8 to 12 months out. <span class="key">Now I help hotel and retreat operators do the same, so you can be out on the floor with your guests instead of shaking trees 20 days before.</span></p>
         <div class="cta-row">
           <a class="btn" href="#book">Book a Pipe Audit</a>
           <a class="btn ghost" href="#audit">What it covers</a>
@@ -308,7 +314,15 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
     </div>
     <div class="numswrap">
       <span class="label nums-label">At re:center</span>
-      <div class="nums" aria-label="re:center by the numbers">
+      <div class="vsl" id="video">
+      <div class="vsl-steps"><span class="step">Step 1</span><span>Watch this first. Three minutes on who the audit is for and what it costs.</span></div>
+      <div class="vsl-box" role="img" aria-label="Video placeholder, Ben's intro video goes here">
+        <svg viewBox="0 0 72 72" width="72" height="72" aria-hidden="true"><circle cx="36" cy="36" r="34" fill="none" stroke="currentColor" stroke-width="2"/><path d="M29 22 L52 36 L29 50 Z" fill="currentColor"/></svg>
+        <p class="vsl-note">Video goes here. Lorem ipsum, shooting tomorrow.</p>
+      </div>
+      <div class="vsl-steps"><span class="step">Step 2</span><span>Then <a href="#book">book your Pipe Audit</a>.</span></div>
+    </div>
+    <div class="nums" aria-label="re:center by the numbers">
         <div class="num"><b>8-12</b><span>Months out we take reservations</span></div>
         <div class="num"><b>90%</b><span>Direct bookings</span></div>
         <div class="num"><b>$1M+</b><span>Retreat pipeline</span></div>
@@ -366,20 +380,15 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
         <img class="rclogo" src="/newsitev1/brand/recenter-logo-negative.svg" alt="re:center">
         <span class="label">The proof is the lodge</span>
         <h2 style="font-size: clamp(2.1rem, 4.4vw, 3.5rem)">At re<span class="colon">:</span>center we take reservations <em>8 to 12 months out,</em> with no paid ads and no investors.</h2>
-        <p class="tone"><span class="key">We run a small team, 90% of our bookings come in direct, and we've built a seven-figure retreat pipeline.</span> re<span class="colon">:</span>center is the first nervous system regulation lodge of its kind, and it's recognized around the world.</p>
-        <div class="cutline" role="img" aria-label="Software bill cut from $3,000 to $900 a month, self-funded">
-          <div><b>$3,000</b><small>a month before</small></div>
-          <div><b>$900</b><small>a month now</small></div>
-          <span>70% less in software, all self-funded. Nobody on the cap table.</span>
-        </div>
+        <p class="tone"><span class="key">We run a small team on about $900 a month in software, 90% of our bookings come in direct, and we've built a seven-figure retreat pipeline.</span> re<span class="colon">:</span>center is the first nervous system regulation lodge of its kind, and it's recognized around the world.</p>
         <ul class="facts">
           <li><span>Direct bookings</span><span>25% to 90% in under two years</span></li>
           <li><span>Reach</span><span>10M+ views on re:center's Instagram alone</span></li>
         </ul>
       </div>
       <div class="mosaic">
-        <figure class="a"><img src="/newsitev1/img/aframe-dog.jpg" alt="Looking down from an A-frame loft through tall windows at a man and a dog on a jungle deck"><figcaption>re:center, Costa Rica</figcaption></figure>
-        <figure><img src="/newsitev1/img/pool-guests.jpg" alt="Guests lounging around a small pool under a shade sail"><figcaption>re:center, Costa Rica</figcaption></figure>
+        <figure class="a"><img src="/newsitev1/img/aframe-dog.jpg" alt="Looking down from an A-frame loft through tall windows at a man and a dog on a jungle deck"><figcaption>Signature A-frame, re:center</figcaption></figure>
+        <figure><img src="/newsitev1/img/pool-guests.jpg" alt="Guests lounging around a small pool under a shade sail"><figcaption>Recovery Day at re:center</figcaption></figure>
       </div>
     </div>
   </section>
@@ -504,7 +513,7 @@ footer .blvglyph { height: 20px; width: 20px; color: var(--fg); }
       <span class="note">Or write to <span class="addr">ben@benlee.ventures</span>. I read every one.</span>
       <span class="note ps"><b>P.S.</b> The $4,500 audit fee is credited in full if you move to the Rewire within 30 days.</span>
     </div>
-    <figure><img src="/newsitev1/img/pool-aerial.jpg" alt="A blue plunge pool seen from above, surrounded by jungle, decking and a shade sail"><figcaption>re:center, Costa Rica</figcaption></figure>
+    <figure><img src="/newsitev1/img/pool-aerial.jpg" alt="A blue plunge pool seen from above, surrounded by jungle, decking and a shade sail"><figcaption>The plunge pool at re:center</figcaption></figure>
   </section>
 
   <footer>
