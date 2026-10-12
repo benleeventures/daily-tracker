@@ -7,6 +7,21 @@ const nextConfig: NextConfig = {
       { source: '/newsitev1', destination: '/newsitev1/index.html' },
     ];
   },
+  async headers() {
+    // Public, read-only assets used by the Framer-hosted offer page (benlee.ventures/run-like-recenter)
+    const cors = [
+      { key: 'Access-Control-Allow-Origin', value: '*' },
+      { key: 'Cache-Control', value: 'public, max-age=300, s-maxage=300, stale-while-revalidate=86400' },
+    ];
+    return [
+      { source: '/newsitev1/olr.html', headers: cors },
+      { source: '/newsitev1/olr.js', headers: cors },
+      { source: '/newsitev1/fonts/:path*', headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }, { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
+      { source: '/newsitev1/img/:path*', headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }] },
+      { source: '/newsitev1/logos/:path*', headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }] },
+      { source: '/newsitev1/brand/:path*', headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }] },
+    ];
+  },
   async redirects() {
     return [
       // Old spelling — keeps previously shared meeting links working
