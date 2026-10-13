@@ -20,6 +20,7 @@ export default function Login() {
   }, []);
 
   const isCoaching = next.startsWith('/coaching');
+  const isGut = next.startsWith('/gut');
 
   // Passwordless option for coaching clients. Only works for invited emails (no new sign-ups).
   const sendLink = async () => {
@@ -67,7 +68,7 @@ export default function Login() {
             <rect width="22" height="22" x="9" y="9" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
             <rect width="14" height="14" x="13" y="13" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
           </svg>
-          <span style={styles.brandText}>{isCoaching ? 'Ben Lee Coaching' : 'Dailys'}</span>
+          <span style={styles.brandText}>{isCoaching ? 'Ben Lee Coaching' : isGut ? 'Gut Audit' : 'Dailys'}</span>
         </div>
 
         <h1 style={styles.title}>Sign In</h1>
