@@ -62,7 +62,7 @@ export function Scale({ label, low, high, value, onChange }: {
       />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: c.muted }}>
         <span>{low}</span>
-        {!unset && <button type="button" onClick={() => onChange(undefined)} style={{ ...s.ghost, fontSize: 12, padding: '6px 10px' }}>Clear</button>}
+        {!unset && <button type="button" onClick={() => onChange(undefined)} style={{ ...s.ghost, fontSize: 12, minHeight: 44, padding: '0 16px' }}>Clear</button>}
         <span>{high}</span>
       </div>
     </div>
@@ -117,6 +117,26 @@ export function IntInput({ id, value, onChange, max = 20 }: { id?: string; value
       value={value ?? ''}
       onChange={(e) => {
         const n = parseInt(e.target.value, 10);
+        onChange(Number.isNaN(n) ? undefined : Math.min(max, Math.max(0, n)));
+      }}
+      style={control}
+    />
+  );
+}
+
+// Decimal number (liters of water). Empty is unset, never 0.
+export function DecimalInput({ id, value, onChange, max = 20 }: { id?: string; value: number | undefined; onChange: (v: number | undefined) => void; max?: number }) {
+  return (
+    <input
+      id={id}
+      type="number"
+      inputMode="decimal"
+      min={0}
+      max={max}
+      step={0.1}
+      value={value ?? ''}
+      onChange={(e) => {
+        const n = parseFloat(e.target.value);
         onChange(Number.isNaN(n) ? undefined : Math.min(max, Math.max(0, n)));
       }}
       style={control}

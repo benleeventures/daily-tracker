@@ -8,6 +8,7 @@ import { addDays, dayLabel, longDate, useDay, useGutConfig, useGutSession } from
 import DayTab from './day-tab';
 import { useNoteImport, type NoteImport } from './import-flow';
 import Morning from './morning';
+import Night from './night';
 import type { Day, SaveState } from './types';
 
 const TABS = [
@@ -109,11 +110,12 @@ function GutApp({ userId, email }: { userId: string; email: string }) {
 // Each tab fills in over the next steps. The shell, header, autosave and access are what's live now.
 function TabPanel({ tab, day, update, isToday, noteImport }: { tab: TabId; day: Day; update: (fn: (d: Day) => Day) => void; isToday: boolean; noteImport: NoteImport }) {
   if (tab === 'morning') return <Morning day={day} update={update} />;
+  if (tab === 'night') return <Night day={day} update={update} />;
   if (tab === 'day') return <DayTab day={day} update={update} isToday={isToday} noteImport={noteImport} />;
   const copy: Record<TabId, string> = {
     morning: '',
     day: '',
-    night: 'Peak bloating, gas, pain, water and the night reflection.',
+    night: '',
     trends: 'The 14-day chart, Bristol spread and food tags.',
     plan: 'Mission, goals and your Day 1 date.',
   };
