@@ -9,6 +9,7 @@ import DayTab from './day-tab';
 import { useNoteImport, type NoteImport } from './import-flow';
 import Morning from './morning';
 import Night from './night';
+import Trends from './trends';
 import type { Day, SaveState } from './types';
 
 const TABS = [
@@ -99,7 +100,7 @@ function GutApp({ userId, email }: { userId: string; email: string }) {
       {!day ? (
         <p style={{ ...s.small, textAlign: 'center', marginTop: '3rem' }}>Loading…</p>
       ) : (
-        <TabPanel tab={tab} day={day} update={update} isToday={isToday} noteImport={noteImport} />
+        <TabPanel tab={tab} day={day} update={update} isToday={isToday} noteImport={noteImport} userId={userId} today={today} flush={flush} />
       )}
 
       <p style={{ ...s.small, marginTop: '3rem' }}>Signed in as {email}</p>
@@ -108,15 +109,16 @@ function GutApp({ userId, email }: { userId: string; email: string }) {
 }
 
 // Each tab fills in over the next steps. The shell, header, autosave and access are what's live now.
-function TabPanel({ tab, day, update, isToday, noteImport }: { tab: TabId; day: Day; update: (fn: (d: Day) => Day) => void; isToday: boolean; noteImport: NoteImport }) {
+function TabPanel({ tab, day, update, isToday, noteImport, userId, today, flush }: { tab: TabId; day: Day; update: (fn: (d: Day) => Day) => void; isToday: boolean; noteImport: NoteImport; userId: string; today: string; flush: () => Promise<void> }) {
   if (tab === 'morning') return <Morning day={day} update={update} />;
+  if (tab === 'trends') return <Trends userId={userId} today={today} flush={flush} />;
   if (tab === 'night') return <Night day={day} update={update} />;
   if (tab === 'day') return <DayTab day={day} update={update} isToday={isToday} noteImport={noteImport} />;
   const copy: Record<TabId, string> = {
     morning: '',
     day: '',
     night: '',
-    trends: 'The 14-day chart, Bristol spread and food tags.',
+    trends: '',
     plan: 'Mission, goals and your Day 1 date.',
   };
   const title = TABS.find((t) => t.id === tab)!.label;
