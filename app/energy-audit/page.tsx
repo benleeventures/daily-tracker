@@ -54,6 +54,7 @@ export default function PublicEnergyAudit() {
   const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
   const [sendState, setSendState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [emailed, setEmailed] = useState(false);
   const loaded = useRef(false);
 
   useEffect(() => {
@@ -93,7 +94,21 @@ export default function PublicEnergyAudit() {
       note: note.trim(),
       answers,
     });
-    setSendState(error ? 'error' : 'sent');
+    if (error) {
+      setSendState('error');
+      return;
+    }
+    try {
+      const res = await fetch('/api/energy-audit/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), answers }),
+      });
+      setEmailed(res.ok);
+    } catch {
+      setEmailed(false);
+    }
+    setSendState('sent');
   };
 
   const leadForm = (
@@ -102,12 +117,17 @@ export default function PublicEnergyAudit() {
       {sendState === 'sent' ? (
         <>
           <h2 style={s.h2}>Got it.</h2>
-          <p style={s.body}>I’ll read through your audit. Your answers are still saved on this device if you want to keep working.</p>
+          <p style={s.body}>
+            {emailed
+              ? `Your results are on their way to ${email.trim()}. Check spam if you don’t see them in a few minutes. `
+              : 'I couldn’t email your results just now, so use Save as PDF to keep a copy. '}
+            I’ll read through your audit too. Your answers are still saved on this device if you want to keep working.
+          </p>
         </>
       ) : (
         <form onSubmit={send}>
-          <h2 style={s.h2}>Want a second set of eyes?</h2>
-          <p style={s.body}>Send it to me. I read every one, and I’ll reach out if I see something.</p>
+          <h2 style={s.h2}>Want your results by email?</h2>
+          <p style={s.body}>I’ll send you a copy. I also read every one, and I’ll reach out if I see something.</p>
           <div style={{ display: 'grid', gap: 8 }}>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" aria-label="Your name" style={s.input} autoComplete="name" />
             <input
@@ -139,7 +159,7 @@ export default function PublicEnergyAudit() {
             }}
           >
             <button type="submit" disabled={sendState === 'sending'} style={s.button}>
-              {sendState === 'sending' ? 'Sending…' : 'Send it to Ben'}
+              {sendState === 'sending' ? 'Sending…' : 'Email me my results'}
             </button>
             <button type="button" onClick={() => window.print()} style={s.ghost}>
               Save as PDF
