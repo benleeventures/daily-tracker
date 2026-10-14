@@ -4,7 +4,7 @@ import StandaloneRedirect from './standalone-redirect';
 const tools = [
   { href: '/dailies', name: 'Dailys', blurb: 'Tasks, habits, energy, meeting notes' },
   { href: '/coaching', name: 'Coaching', blurb: 'Client exercises, plans, and progress' },
-  { href: '/practice', name: 'Practice', blurb: 'Breath and meditation, Week 1. Nothing locked' },
+  { href: '/practice', name: 'Practice', blurb: 'Meditation course by Miguel de la Roza. Nothing locked' },
   { href: '/arc', name: 'Arc', blurb: 'Bookmarks, resources, learning materials' },
   { href: '/energy-audit', name: 'Energy Audit', blurb: 'Free: find what fuels you and what drains you' },
 ];

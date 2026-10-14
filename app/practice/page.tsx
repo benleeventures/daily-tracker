@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { Mark, c, font, s } from '../coaching/ui';
-import { classes, course, hard, learn, techniques, type PracticeClass, type Technique } from './content';
+import { course, hard, learn, techniques, weeks, type PracticeClass, type Technique } from './content';
+import { ShowMe, Visual, type VisualKind } from './visuals';
 
 // Quiet on purpose: no streaks, no counters, no locks. We only remember the last day you practiced each class.
 const KEY = 'practice:last';
@@ -56,19 +57,20 @@ export default function PracticePage() {
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <header style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '2rem' }}>
           <Mark />
-          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.3px' }}>re:center</span>
+          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.3px' }}>Practice</span>
         </header>
 
         {open ? (
           <Session cls={open} last={last[open.id]} onBack={() => setOpen(null)} onDone={() => done(open.id)} />
         ) : (
           <>
-            <p style={s.eyebrow}>{course.eyebrow}</p>
-            <h1 style={s.h1}>{course.title}</h1>
-            <p style={{ ...s.body, color: c.muted, fontStyle: 'italic' }}>“{course.quote}”</p>
-            <p style={{ ...s.small, marginBottom: '1.75rem' }}>
-              {course.teacher} · {course.teacherLine}. Everything is open. Start anywhere.
-            </p>
+            <p style={s.eyebrow}>Meditation course · 28 days</p>
+            <h1 style={s.h1}>Nervous System</h1>
+            <div style={{ borderLeft: `2px solid ${c.gold}`, padding: '2px 0 2px 14px', margin: '0 0 1.75rem' }}>
+              <p style={{ ...s.eyebrow, marginBottom: 2 }}>Created and taught by</p>
+              <p style={{ fontSize: 18, fontWeight: 600, margin: '0 0 2px', letterSpacing: '-0.2px' }}>{course.teacher}</p>
+              <p style={{ ...s.small, margin: 0 }}>{course.teacherLine}. Everything is open. Start anywhere.</p>
+            </div>
 
             <nav role="tablist" style={{ display: 'flex', gap: 4, borderBottom: `0.5px solid ${c.line}`, marginBottom: '1.75rem' }}>
               {TABS.map((t) => (
@@ -98,6 +100,9 @@ export default function PracticePage() {
             {tab === 'Breathe' && <Breathe />}
           </>
         )}
+        <footer style={{ ...s.small, marginTop: '3.5rem', paddingTop: '1rem', borderTop: `0.5px solid ${c.line}` }}>
+          The course, its sequences and its teachings are by {course.teacher}. Quotes credited to Nazareth Castellanos and Ajahn Tong.
+        </footer>
       </div>
     </main>
   );
@@ -106,26 +111,31 @@ export default function PracticePage() {
 function PracticeTab({ last, onOpen }: { last: Last; onOpen: (c: PracticeClass) => void }) {
   return (
     <>
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0, borderTop: `0.5px solid ${c.line}` }}>
-        {classes.map((k, i) => (
-          <li key={k.id} style={{ borderBottom: `0.5px solid ${c.line}` }}>
-            <button onClick={() => onOpen(k)} style={row}>
-              <span style={{ flex: 1 }}>
-                <span style={s.eyebrow}>
-                  Class {i + 1} · {k.minutes} min · suggested {k.suggested}
-                </span>
-                <span style={{ display: 'block', fontSize: 17, fontWeight: 600, margin: '4px 0 2px', letterSpacing: '-0.2px' }}>{k.title}</span>
-                <span style={s.small}>{k.steps.join(' · ')}</span>
-              </span>
-              <span style={{ ...s.small, whiteSpace: 'nowrap', textAlign: 'right' }}>
-                Last: {when(last[k.id])}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {weeks.map((w) => (
+        <section key={w.id} style={{ marginBottom: '2.25rem' }}>
+          <p style={s.eyebrow}>{w.eyebrow}</p>
+          <h2 style={{ ...s.h2, marginTop: 4 }}>{w.title}</h2>
+          <p style={{ ...s.small, fontStyle: 'italic', marginBottom: '0.75rem' }}>“{w.quote}”</p>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, borderTop: `0.5px solid ${c.line}` }}>
+            {w.classes.map((k) => (
+              <li key={k.id} style={{ borderBottom: `0.5px solid ${c.line}` }}>
+                <button onClick={() => onOpen(k)} style={row}>
+                  <span style={{ flex: 1 }}>
+                    <span style={s.eyebrow}>
+                      {k.minutes} min · suggested {k.suggested}
+                    </span>
+                    <span style={{ display: 'block', fontSize: 17, fontWeight: 600, margin: '4px 0 2px', letterSpacing: '-0.2px' }}>{k.title}</span>
+                    <span style={s.small}>{k.steps.map((x) => x.name.split(' · ')[0]).join(' · ')}</span>
+                  </span>
+                  <span style={{ ...s.small, whiteSpace: 'nowrap', textAlign: 'right' }}>Last: {when(last[k.id])}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
 
-      <h2 style={{ ...s.h2, marginTop: '2.5rem' }}>When practice gets hard</h2>
+      <h2 style={s.h2}>When practice gets hard</h2>
       {hard.map((h) => (
         <Fold key={h.q} title={h.q}>
           <p style={{ ...s.body, margin: 0 }}>{h.a}</p>
@@ -146,9 +156,17 @@ function Session({ cls, last, onBack, onDone }: { cls: PracticeClass; last?: str
 
       <ol style={{ margin: '1.75rem 0', padding: 0, listStyle: 'none', borderTop: `0.5px solid ${c.line}` }}>
         {cls.steps.map((st, i) => (
-          <li key={st} style={{ display: 'flex', gap: 14, alignItems: 'baseline', padding: '16px 0', borderBottom: `0.5px solid ${c.line}` }}>
-            <span style={{ ...s.small, width: 18 }}>{i + 1}</span>
-            <span style={{ fontSize: 17 }}>{st}</span>
+          <li key={st.name} style={{ padding: '16px 0', borderBottom: `0.5px solid ${c.line}` }}>
+            <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
+              <span style={{ ...s.small, width: 18 }}>{i + 1}</span>
+              <span style={{ fontSize: 17 }}>{st.name}</span>
+            </div>
+            {st.detail && <p style={{ ...s.body, margin: '6px 0 0 32px', fontSize: 15 }}>{st.detail}</p>}
+            {st.visual && (
+              <div style={{ marginLeft: 32 }}>
+                <ShowMe kind={st.visual} />
+              </div>
+            )}
           </li>
         ))}
       </ol>
@@ -186,6 +204,7 @@ function LearnTab() {
             </ul>
           )}
           {l.quote && <p style={{ ...s.small, fontStyle: 'italic', margin: 0 }}>{l.quote}</p>}
+          {l.visual && <ShowMe kind={l.visual} />}
         </Fold>
       ))}
     </>
@@ -244,9 +263,16 @@ function Breathe() {
   };
 
   const label = tech.phases[phase].label;
-  const growing = running && /^(In|Top up)/.test(label);
-  const shrinking = running && /out/i.test(label);
-  const secs = tech.phases[phase].secs;
+  const prev = tech.phases[(phase + tech.phases.length - 1) % tech.phases.length].label;
+  const isIn = (l: string) => /^(In|Top up)/.test(l);
+  const isHold = /^Hold/.test(label);
+  // holds stay at whatever size the breath just reached
+  const full = isHold ? isIn(prev) : isIn(label);
+  const growing = running && full;
+  const shrinking = running && !full;
+  const secs = isHold ? 0.2 : tech.phases[phase].secs;
+  const kind: VisualKind | null = tech.id === 'ujj' ? 'ujjayi' : tech.id === 'bhr' ? 'bhramari' : tech.id === 'nadi' ? null : 'breath';
+  const [show, setShow] = useState(false);
 
   const orb: CSSProperties = {
     width: 160,
@@ -297,6 +323,15 @@ function Breathe() {
       <p style={{ ...s.small, textAlign: 'center' }}>
         {running ? `Cycle ${cycle + 1} of ${cycles}` : `${cycles} cycles`}
       </p>
+
+      {kind && (
+        <div style={{ textAlign: 'center' }}>
+          <button onClick={() => setShow(!show)} aria-expanded={show} style={{ ...s.ghost, minHeight: 44 }}>
+            {show ? 'Hide diagram' : 'Show me'}
+          </button>
+          {show && <Visual kind={kind} full={running ? full : false} secs={running ? secs : 0.4} />}
+        </div>
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: '1rem', alignItems: 'center' }}>
         {running ? (
