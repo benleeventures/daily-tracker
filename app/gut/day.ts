@@ -50,6 +50,11 @@ export function longDate(date: string): string {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
+export function shortDate(date: string): string {
+  const [y, m, d] = parts(date);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export function dayLabel(start: string, date: string): string {
   const n = daysBetween(start, date) + 1;
   if (n < 1) return 'Before day 1';

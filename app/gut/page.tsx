@@ -9,6 +9,7 @@ import DayTab from './day-tab';
 import { useNoteImport, type NoteImport } from './import-flow';
 import Morning from './morning';
 import Night from './night';
+import Plan, { type PlanProps } from './plan';
 import Trends from './trends';
 import type { Day, SaveState } from './types';
 
@@ -47,7 +48,7 @@ function GutApp({ userId, email }: { userId: string; email: string }) {
   const [tab, setTab] = useState<TabId>('morning');
   const { day, update, save, flush } = useDay(userId, date);
   const noteImport = useNoteImport({ day, update, today, viewed: date, setDate });
-  const { config, firstDay, loaded } = useGutConfig(userId);
+  const { config, updateConfig, firstDay, loaded, loadFailed, save: configSave } = useGutConfig(userId);
 
   // The home-screen app can resume on yesterday's date. When the calendar day rolls over, follow it
   // if the person was looking at "today".
@@ -100,7 +101,7 @@ function GutApp({ userId, email }: { userId: string; email: string }) {
       {!day ? (
         <p style={{ ...s.small, textAlign: 'center', marginTop: '3rem' }}>Loading…</p>
       ) : (
-        <TabPanel tab={tab} day={day} update={update} isToday={isToday} noteImport={noteImport} userId={userId} today={today} flush={flush} />
+        <TabPanel tab={tab} day={day} update={update} isToday={isToday} noteImport={noteImport} userId={userId} today={today} flush={flush} plan={{ config, updateConfig, firstDay, today, loaded, loadFailed, save: configSave }} />
       )}
 
       <p style={{ ...s.small, marginTop: '3rem' }}>Signed in as {email}</p>
@@ -109,8 +110,9 @@ function GutApp({ userId, email }: { userId: string; email: string }) {
 }
 
 // Each tab fills in over the next steps. The shell, header, autosave and access are what's live now.
-function TabPanel({ tab, day, update, isToday, noteImport, userId, today, flush }: { tab: TabId; day: Day; update: (fn: (d: Day) => Day) => void; isToday: boolean; noteImport: NoteImport; userId: string; today: string; flush: () => Promise<void> }) {
+function TabPanel({ tab, day, update, isToday, noteImport, userId, today, flush, plan }: { tab: TabId; day: Day; update: (fn: (d: Day) => Day) => void; isToday: boolean; noteImport: NoteImport; userId: string; today: string; flush: () => Promise<void>; plan: PlanProps }) {
   if (tab === 'morning') return <Morning day={day} update={update} />;
+  if (tab === 'plan') return <Plan {...plan} />;
   if (tab === 'trends') return <Trends userId={userId} today={today} flush={flush} />;
   if (tab === 'night') return <Night day={day} update={update} />;
   if (tab === 'day') return <DayTab day={day} update={update} isToday={isToday} noteImport={noteImport} />;
@@ -119,7 +121,7 @@ function TabPanel({ tab, day, update, isToday, noteImport, userId, today, flush 
     day: '',
     night: '',
     trends: '',
-    plan: 'Mission, goals and your Day 1 date.',
+    plan: '',
   };
   const title = TABS.find((t) => t.id === tab)!.label;
   return (
