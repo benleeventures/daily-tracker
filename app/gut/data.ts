@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { emptyDay, normalize } from './day';
 import type { Config, Day, SaveState } from './types';
 
-export { addDays, dayLabel, daysBetween, emptyDay, longDate } from './day';
+export { addDays, dayLabel, daysBetween, emptyDay, longDate, shortDate } from './day';
 
 // ---- session + access ----
 
@@ -38,12 +38,20 @@ export function useGutSession(): GutSession {
   return session;
 }
 
-// ---- config: Day 1 defaults to the earliest day record ----
+const DEBOUNCE_MS = 700;
+
+// ---- config: mission, goals, Day 1. Day 1 defaults to the earliest day record ----
 
 export function useGutConfig(userId: string | null) {
   const [config, setConfig] = useState<Config>({ goals: [] });
   const [firstDay, setFirstDay] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [save, setSave] = useState<SaveState>({ kind: 'idle' });
+
+  const latest = useRef<Config>({ goals: [] });
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pending = useRef(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -54,19 +62,57 @@ export function useGutConfig(userId: string | null) {
         supabase.from('gut_days').select('date').eq('user_id', userId).order('date', { ascending: true }).limit(1).maybeSingle(),
       ]);
       if (cancelled) return;
-      if (cfg.data?.doc) setConfig({ goals: [], ...(cfg.data.doc as Partial<Config>) });
+      if (cfg.error) {
+        setLoadFailed(true); // never save over a config we couldn't read
+      } else if (cfg.data?.doc) {
+        const loadedCfg = { goals: [], ...(cfg.data.doc as Partial<Config>) } as Config;
+        latest.current = loadedCfg;
+        setConfig(loadedCfg);
+      }
       if (first.data?.date) setFirstDay(first.data.date as string);
       setLoaded(true);
     })();
     return () => { cancelled = true; };
   }, [userId]);
 
-  return { config, setConfig, firstDay, loaded };
+  const persist = useCallback(async () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    if (!userId || !pending.current) return;
+    pending.current = false;
+    setSave({ kind: 'saving' });
+    const { error } = await supabase.from('gut_config').upsert({ user_id: userId, doc: latest.current }, { onConflict: 'user_id' });
+    if (error) {
+      pending.current = true; // retry on the next change
+      setSave({ kind: 'error', message: error.message || "Couldn't save" });
+    } else {
+      setSave({ kind: 'saved', at: new Date() });
+    }
+  }, [userId]);
+
+  // Merge a change into the config, show it immediately, and save after a short pause
+  const updateConfig = useCallback((patch: Partial<Config>) => {
+    const next = { ...latest.current, ...patch };
+    latest.current = next;
+    setConfig(next);
+    pending.current = true;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => { void persist(); }, DEBOUNCE_MS);
+  }, [persist]);
+
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === 'hidden') void persist(); };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+    };
+  }, [persist]);
+
+  return { config, updateConfig, firstDay, loaded, loadFailed, save };
 }
 
 // ---- one day, with debounced autosave ----
-
-const DEBOUNCE_MS = 700;
 
 // Autosave rules: every change is debounced ~700ms; one write in flight at a time, always carrying the
 // latest state; pending writes flush before the date changes or the page is hidden; on error the local
