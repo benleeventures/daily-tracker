@@ -26,6 +26,8 @@ const nextConfig: NextConfig = {
     return [
       // Old spelling — keeps previously shared meeting links working
       { source: '/dailys/:path*', destination: '/dailies/:path*', permanent: true },
+      // Instinct was given this path for the nightly note form; the page itself lives at /gut/ingest
+      { source: '/gut/instinct', destination: '/gut/ingest', permanent: false },
     ];
   },
 };

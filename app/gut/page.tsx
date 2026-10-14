@@ -214,7 +214,7 @@ function Frame({ children, header, right, tabs }: { children: React.ReactNode; h
 
 // Visible keyboard focus on every control, and no motion for people who ask for none
 const FOCUS_CSS = `
-.gut button:focus-visible, .gut input:focus-visible, .gut textarea:focus-visible, .gut select:focus-visible { outline: 2px solid ${c.goldDeep}; outline-offset: 2px; }
+.gut button:focus-visible, .gut input:focus-visible, .gut textarea:focus-visible, .gut select:focus-visible, .gut [role=slider]:focus-visible { outline: 2px solid ${c.goldDeep}; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .gut * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 `;
 
