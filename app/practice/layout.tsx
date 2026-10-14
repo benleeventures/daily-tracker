@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
   title: 'Practice',
-  description: 'Nervous System · Week 1. A meditation course by Miguel de la Roza.',
+  description: 'Nervous System · Week 1. A meditation course created and taught by Miguel de la Roza.',
 };
 
 export const viewport: Viewport = {
