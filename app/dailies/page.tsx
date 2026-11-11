@@ -150,14 +150,14 @@ export default function DailyTracker() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Look back past skipped days (up to two weeks) to the last entry that still has open tasks
+      // Look back over every past day (up to ~2 months of entries) and collect all tasks still open
       const { data, error } = await supabase
         .from('daily_entries')
         .select('date, tasks')
         .eq('user_id', session.user.id)
         .lt('date', entryDate)
         .order('date', { ascending: false })
-        .limit(14);
+        .limit(60);
 
       if (error) {
         console.error('Error loading previous tasks:', error);
@@ -166,9 +166,24 @@ export default function DailyTracker() {
       if (entryDate !== dateRef.current) return;
 
       type Task = { id: string; text: string; completed: boolean };
-      const prev = (data || []).find((d) => (d.tasks as Task[] | null)?.some((t) => !t.completed));
-      setCarriedOverTasks(prev ? (prev.tasks as Task[]).filter((t) => !t.completed) : []);
-      setCarriedFrom(prev ? prev.date : '');
+      // Newest day first: a task's most recent appearance decides whether it's still open,
+      // so something carried forward and finished later doesn't come back.
+      const seen = new Set<string>();
+      const open: Task[] = [];
+      let oldest = '';
+      for (const d of data || []) {
+        for (const t of (d.tasks as Task[] | null) || []) {
+          const key = t.text.trim().toLowerCase();
+          if (!key || seen.has(key)) continue;
+          seen.add(key);
+          if (!t.completed) {
+            open.push(t);
+            oldest = d.date;
+          }
+        }
+      }
+      setCarriedOverTasks(open);
+      setCarriedFrom(oldest);
     } catch (e) {
       console.error('Error loading carried over tasks:', e);
     }
@@ -951,9 +966,9 @@ export default function DailyTracker() {
         <div style={styles.section}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <button onClick={() => setShowCarriedOver(!showCarriedOver)} style={styles.collapseBtn}>
-              {showCarriedOver ? '▼' : '▶'} Still open from {carriedFromLabel} ({pendingCarry.length})
+              {showCarriedOver ? '▼' : '▶'} Still open {carriedFromLabel === 'yesterday' ? 'from yesterday' : `since ${carriedFromLabel}`} ({pendingCarry.length})
             </button>
-            <button onClick={carryAll} style={styles.linkBtn}>Bring all forward</button>
+            <button onClick={carryAll} style={styles.linkBtn}>Bring all to today</button>
           </div>
           {showCarriedOver && (
             <div style={styles.checklist}>
