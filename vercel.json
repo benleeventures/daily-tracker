@@ -1,0 +1,3 @@
+{
+  "crons": [{ "path": "/api/polar/sync", "schedule": "0 15 * * *" }]
+}

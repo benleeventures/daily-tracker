@@ -33,6 +33,18 @@ export default function Morning({ day, update }: { day: Day; update: (fn: (d: Da
         </Field>
         <Scale label="Sleep quality" low="Wrecked" high="Deep" value={am.sleepQ} onChange={(sleepQ) => set({ sleepQ })} />
       </Section>
+      {day.polar && (
+        <p style={{ margin: '-6px 0 22px', fontSize: 13, color: '#676d55', lineHeight: 1.5 }}>
+          From Polar:{' '}
+          {[
+            day.polar.sleepMin != null && `${Math.floor(day.polar.sleepMin / 60)}h${String(day.polar.sleepMin % 60).padStart(2, '0')} sleep`,
+            day.polar.sleepScore != null && `score ${day.polar.sleepScore}`,
+            day.polar.hrv != null && `HRV ${day.polar.hrv} ms`,
+            day.polar.rhr != null && `RHR ${day.polar.rhr}`,
+            day.polar.steps != null && `${day.polar.steps.toLocaleString('en-US')} steps`,
+          ].filter(Boolean).join(' · ') || 'no data'}
+        </p>
+      )}
 
       <Section title="Right now">
         <Scale label="Energy" low="Empty" high="Full" value={am.energy} onChange={(energy) => set({ energy })} />

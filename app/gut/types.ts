@@ -66,6 +66,7 @@ export type Day = {
     good?: string;
     tomorrow?: string;
   };
+  polar?: import('@/lib/polar').PolarDay; // pulled from the Polar band by /api/polar/sync
   imports?: string[]; // hashes of notes already imported into this day, to warn before a repeat
   updatedAt: string; // ISO timestamp
 };
